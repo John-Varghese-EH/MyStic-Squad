@@ -38,27 +38,33 @@ export default function MainLayout({ children }: { children: React.ReactNode }) 
           <SidebarContent>
             <SidebarMenu>
               <SidebarMenuItem>
-                <SidebarMenuButton href="#" isActive>
+                <SidebarMenuButton href="/dashboard" isActive>
                   <LayoutDashboard />
                   Dashboard
                 </SidebarMenuButton>
               </SidebarMenuItem>
               <SidebarMenuItem>
-                <SidebarMenuButton href="#">
+                <SidebarMenuButton href="/alerts">
                   <AlertTriangle />
                   Alerts
                 </SidebarMenuButton>
               </SidebarMenuItem>
               <SidebarMenuItem>
-                <SidebarMenuButton href="#">
+                <SidebarMenuButton href="/reports">
                   <FileText />
                   Reports
                 </SidebarMenuButton>
               </SidebarMenuItem>
               <SidebarMenuItem>
-                <SidebarMenuButton href="#">
+                <SidebarMenuButton href="/analytics">
                   <BarChart3 />
                   Analytics
+                </SidebarMenuButton>
+              </SidebarMenuItem>
+              <SidebarMenuItem>
+                <SidebarMenuButton href="/chatbot">
+                  <UserCircle />
+                  Chatbot
                 </SidebarMenuButton>
               </SidebarMenuItem>
               <SidebarMenuItem>

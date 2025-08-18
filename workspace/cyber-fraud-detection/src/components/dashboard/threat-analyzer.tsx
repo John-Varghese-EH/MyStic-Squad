@@ -7,6 +7,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { Lock, Loader2, AlertCircle, CheckCircle } from 'lucide-react';
+import { useToast } from '@/hooks/use-toast';
 import type { AnalyzeThreatMessageOutput } from '@/ai/flows/analyze-threat-message';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
