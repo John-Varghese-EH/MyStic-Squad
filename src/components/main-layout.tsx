@@ -22,12 +22,14 @@ import {
   BarChart3,
   Settings,
   Bot,
+  LifeBuoy,
+  Briefcase,
 } from 'lucide-react';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 
 export default function MainLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
-  const pageTitle = pathname.split('/').pop() || 'dashboard';
+  const pageTitle = (pathname.split('/').pop() || 'dashboard').replace('-', ' ');
 
   const menuItems = [
     { href: '/', icon: <LayoutDashboard />, label: 'Dashboard', exact: true },
@@ -35,6 +37,8 @@ export default function MainLayout({ children }: { children: React.ReactNode }) 
     { href: '/reports', icon: <FileText />, label: 'Reports' },
     { href: '/analytics', icon: <BarChart3 />, label: 'Analytics' },
     { href: '/chatbot', icon: <Bot />, label: 'Chatbot' },
+    { href: '/awareness', icon: <LifeBuoy />, label: 'Awareness' },
+    { href: '/case-management', icon: <Briefcase />, label: 'Case Management' },
     { href: '/settings', icon: <Settings />, label: 'Settings' },
   ];
 

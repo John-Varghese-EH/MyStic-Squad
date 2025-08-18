@@ -21,7 +21,18 @@ const DrugChatOutputSchema = z.object({
 export type DrugChatOutput = z.infer<typeof DrugChatOutputSchema>;
 
 
+const predefinedQuestions: Record<string, string> = {
+    "what is drug trafficking?": "Drug trafficking is the crime of selling, transporting, or illegally importing unlawful controlled substances, such as heroin, cocaine, marijuana, or other illegal drugs.",
+    "how to report suspicious activity?": "You can report suspicious activity to your local law enforcement agency. Some jurisdictions have specific hotlines or online forms for this purpose. For the purpose of this demo, you can use the 'Case Management' page.",
+    "what are cert roles?": "CERT (Community Emergency Response Team) members are trained volunteers who can assist in their communities during emergencies. Their roles can include light search and rescue, disaster medical operations, and fire suppression."
+};
+
+
 export async function chatAboutDrugs(input: DrugChatInput): Promise<DrugChatOutput> {
+  const lowerCaseMessage = input.message.toLowerCase().trim();
+  if (predefinedQuestions[lowerCaseMessage]) {
+    return { response: predefinedQuestions[lowerCaseMessage] };
+  }
   return drugAwarenessChatFlow(input);
 }
 

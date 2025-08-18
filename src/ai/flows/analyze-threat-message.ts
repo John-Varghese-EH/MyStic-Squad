@@ -56,30 +56,51 @@ const analyzeThreatMessageFlow = ai.defineFlow(
 
 
 export async function analyzeThreatMessage(input: AnalyzeThreatMessageInput): Promise<AnalyzeThreatMessageOutput> {
-  // For demonstration, we'll use a mix of dummy logic and a real AI call.
-  // This allows for quick, predictable responses for certain inputs,
-  // while still having full AI capabilities.
   const lowerCaseMessage = input.encryptedMessage.toLowerCase();
+  
+  const highRiskKeywords = ['coke', 'heroin', 'meth', 'untraceable', 'kilo', 'laundering'];
+  const mediumRiskKeywords = ['pills', 'molly', 'acid', 'powder', 'grams', 'shipment', 'meetup', 'crypto'];
+  const lowRiskKeywords = ['green', 'smoke', 'edibles', 'party pack', '420', 'oz', 'delivery', 'gram', 'drop', 'shipment'];
 
-  if (lowerCaseMessage.includes('untraceable') || lowerCaseMessage.includes('kilo')) {
+  const foundHighKeywords = highRiskKeywords.filter(kw => lowerCaseMessage.includes(kw));
+  const foundMediumKeywords = mediumRiskKeywords.filter(kw => lowerCaseMessage.includes(kw));
+  const foundLowKeywords = lowRiskKeywords.filter(kw => lowerCaseMessage.includes(kw));
+
+  if (foundHighKeywords.length > 0) {
     return {
       threatLevel: 'high',
-      keywords: ['untraceable', 'kilo', 'urgent'],
-      patterns: ['High-quantity transaction', 'Evasion technique'],
-      reason: 'Message discusses large quantities and untraceable methods, indicating a high-risk illicit transaction.',
+      keywords: foundHighKeywords,
+      patterns: ['High-risk keywords detected'],
+      reason: `Message contains high-risk keywords: ${foundHighKeywords.join(', ')}.`,
       warrantsReview: true,
     };
   }
-  if (lowerCaseMessage.includes('party pack')) {
-     return {
+
+  if (foundMediumKeywords.length > 0) {
+    return {
+      threatLevel: 'medium',
+      keywords: foundMediumKeywords,
+      patterns: ['Medium-risk keywords detected'],
+      reason: `Message contains medium-risk keywords: ${foundMediumKeywords.join(', ')}.`,
+      warrantsReview: true,
+    };
+  }
+  
+  if (foundLowKeywords.length > 0) {
+    return {
       threatLevel: 'low',
-      keywords: ['party pack'],
-      patterns: ['Slang for recreational drugs'],
-      reason: 'Use of slang indicates potential recreational drug use, but no immediate high-level threat.',
+      keywords: foundLowKeywords,
+      patterns: ['Low-risk keywords detected'],
+      reason: `Message contains low-risk keywords: ${foundLowKeywords.join(', ')}.`,
       warrantsReview: false,
     };
   }
 
-  // If no dummy logic matches, call the actual AI flow
-  return analyzeThreatMessageFlow(input);
+  return {
+    threatLevel: 'low',
+    keywords: [],
+    patterns: ['No specific keywords detected'],
+    reason: 'No suspicious keywords were found in the message.',
+    warrantsReview: false,
+  };
 }
