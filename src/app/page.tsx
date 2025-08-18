@@ -11,6 +11,7 @@ import DetectionTrendChart from '@/components/dashboard/detection-trend-chart';
 import ThreatAnalyzer from '@/components/dashboard/threat-analyzer';
 import { analyzeThreatMessage, type AnalyzeThreatMessageOutput } from '@/ai/flows/analyze-threat-message';
 import { useToast } from '@/hooks/use-toast';
+import AIChatbotCard from '@/components/dashboard/ai-chatbot-card';
 
 const DashboardPage: FC = () => {
   const [messages, setMessages] = useState<ThreatMessage[]>([]);
@@ -22,11 +23,11 @@ const DashboardPage: FC = () => {
 
   useEffect(() => {
     setIsClient(true);
-    setMessages(generateInitialMessages());
+    const initialMessages = generateInitialMessages();
+    setMessages(initialMessages);
 
     const interval = setInterval(() => {
       setMessages(prevMessages => {
-        // Prevent messages from growing indefinitely and only keep the latest 50
         const updatedMessages = [generateNewMessage(), ...prevMessages];
         return updatedMessages.slice(0, 50);
       });
@@ -36,24 +37,24 @@ const DashboardPage: FC = () => {
   }, []);
 
   const overallRiskLevel = useMemo((): ThreatLevel => {
-    if (messages.length === 0) return 'low';
+    if (!isClient || messages.length === 0) return 'low';
     if (messages.some(m => m.threatLevel === 'high')) return 'high';
     if (messages.some(m => m.threatLevel === 'medium')) return 'medium';
     return 'low';
-  }, [messages]);
+  }, [messages, isClient]);
 
   const criticalAlert = useMemo(() => {
-    if (messages.length === 0) return undefined;
+    if (!isClient || messages.length === 0) return undefined;
     return messages.find(m => m.threatLevel === 'high');
-  }, [messages]);
+  }, [messages, isClient]);
   
   const stats = useMemo(() => {
-    if (messages.length === 0) return { total: 0, high: 0, medium: 0 };
+    if (!isClient || messages.length === 0) return { total: 0, high: 0, medium: 0 };
     const total = messages.length;
     const high = messages.filter(m => m.threatLevel === 'high').length;
     const medium = messages.filter(m => m.threatLevel === 'medium').length;
     return { total, high, medium };
-  }, [messages]);
+  }, [messages, isClient]);
 
   const handleAnalyze = async (encryptedMessage: string) => {
     setIsAnalyzing(true);
@@ -90,6 +91,7 @@ const DashboardPage: FC = () => {
           <div className="lg:col-span-2 flex flex-col gap-6">
             <Skeleton className="h-[350px] w-full" />
             <Skeleton className="h-[230px] w-full" />
+            <Skeleton className="h-[150px] w-full" />
           </div>
         </div>
       </div>
@@ -116,6 +118,7 @@ const DashboardPage: FC = () => {
             isResultOpen={isResultOpen}
             setIsResultOpen={setIsResultOpen}
           />
+          <AIChatbotCard />
         </div>
       </div>
     </div>
