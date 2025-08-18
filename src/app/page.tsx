@@ -36,16 +36,19 @@ const DashboardPage: FC = () => {
   }, []);
 
   const overallRiskLevel = useMemo((): ThreatLevel => {
+    if (messages.length === 0) return 'low';
     if (messages.some(m => m.threatLevel === 'high')) return 'high';
     if (messages.some(m => m.threatLevel === 'medium')) return 'medium';
     return 'low';
   }, [messages]);
 
   const criticalAlert = useMemo(() => {
+    if (messages.length === 0) return undefined;
     return messages.find(m => m.threatLevel === 'high');
   }, [messages]);
   
   const stats = useMemo(() => {
+    if (messages.length === 0) return { total: 0, high: 0, medium: 0 };
     const total = messages.length;
     const high = messages.filter(m => m.threatLevel === 'high').length;
     const medium = messages.filter(m => m.threatLevel === 'medium').length;
