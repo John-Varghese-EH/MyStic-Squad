@@ -1,86 +1,117 @@
-"use client";
+'use client';
 
 import { useState } from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
-import { Button } from "@/components/ui/button";
-import { ScrollArea } from "@/components/ui/scroll-area";
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Input } from '@/components/ui/input';
+import { Button } from '@/components/ui/button';
+import { ScrollArea } from '@/components/ui/scroll-area';
+import { chatAboutDrugs } from '@/ai/flows/drug-awareness-chatbot';
+import { Avatar, AvatarFallback } from '@/components/ui/avatar';
+import { Bot, User } from 'lucide-react';
+import { useToast } from '@/hooks/use-toast';
 
 export default function Chatbot() {
   const [messages, setMessages] = useState<{ text: string, sender: 'user' | 'bot' }[]>([]);
   const [input, setInput] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  const { toast } = useToast();
 
   const handleSendMessage = async () => {
     if (input.trim()) {
-      setMessages([...messages, { text: input, sender: 'user' }]);
+      const newMessages = [...messages, { text: input, sender: 'user' as const }];
+      setMessages(newMessages);
       setInput('');
       setIsLoading(true);
 
-      // Placeholder for Gemini API integration
-      // Replace with actual API call to Gemini for drug awareness information
-      await new Promise(resolve => setTimeout(resolve, 1000)); // Simulate API call delay
-      const botResponse = "This is a placeholder bot response about drug awareness.";
-      setMessages(currentMessages => [...currentMessages, { text: botResponse, sender: 'bot' }]);
-      setIsLoading(false);
+      try {
+        const result = await chatAboutDrugs({ message: input });
+        setMessages(currentMessages => [...currentMessages, { text: result.response, sender: 'bot' }]);
+      } catch (error) {
+        console.error("Chatbot API error:", error);
+         toast({
+          variant: "destructive",
+          title: "Error",
+          description: "Could not get a response from the chatbot. Please try again.",
+        });
+        setMessages(messages); // Revert to previous state if API call fails
+      } finally {
+        setIsLoading(false);
+      }
     }
   };
 
   return (
-    <div className="flex flex-col h-[calc(100vh-4rem)]"> {/* Adjusted height for layout */}
-      <Card className="flex-1 flex flex-col m-4"> {/* Added margin */}
-        <CardHeader>
-          <CardTitle>AI Chatbot for Drug Awareness</CardTitle>
+    <div className="flex flex-col h-[calc(100vh-4rem)] bg-background">
+      <Card className="flex-1 flex flex-col m-4 shadow-lg rounded-xl">
+        <CardHeader className="border-b">
+          <CardTitle className="flex items-center gap-2">
+            <Bot className="text-primary" />
+            AI Chatbot for Drug Awareness
+          </CardTitle>
         </CardHeader>
-        <CardContent className="flex-1 overflow-hidden">
-          <ScrollArea className="h-full pr-4"> {/* Added padding-right for scrollbar */}
-            <div className="flex flex-col space-y-4">
-          {messages.map((msg, index) => (
-            <div
-              key={index}
-              className={`flex ${msg.sender === 'user' ? 'justify-end' : 'justify-start'}`}
-            >
-              <div
-                className={`p-3 rounded-lg max-w-[70%] ${ // Adjusted max-width
-                  msg.sender === 'user' ? 'bg-primary text-primary-foreground' : 'bg-muted' // Use theme colors
-                }`}
-              >
-                {msg.text}
-              </div>
-            </div>
-          ))}
-           {isLoading && (
-              <div className="flex justify-start">
-                <div className="p-3 rounded-lg bg-muted">
-                  Typing...
+        <CardContent className="flex-1 overflow-hidden p-0">
+          <ScrollArea className="h-full p-6">
+            <div className="flex flex-col space-y-6">
+              {messages.map((msg, index) => (
+                <div
+                  key={index}
+                  className={`flex items-start gap-3 ${msg.sender === 'user' ? 'justify-end' : 'justify-start'}`}
+                >
+                  {msg.sender === 'bot' && (
+                     <Avatar className="w-8 h-8 bg-primary text-primary-foreground flex items-center justify-center">
+                        <Bot size={20} />
+                      </Avatar>
+                  )}
+                  <div
+                    className={`p-3 rounded-lg max-w-[80%] ${
+                      msg.sender === 'user' ? 'bg-primary text-primary-foreground rounded-br-none' : 'bg-muted rounded-bl-none'
+                    }`}
+                  >
+                    <p className="text-sm whitespace-pre-wrap">{msg.text}</p>
+                  </div>
+                   {msg.sender === 'user' && (
+                     <Avatar className="w-8 h-8 bg-muted text-muted-foreground flex items-center justify-center">
+                        <User size={20} />
+                      </Avatar>
+                  )}
                 </div>
-              </div>
-            )}
+              ))}
+              {isLoading && (
+                <div className="flex items-start gap-3 justify-start">
+                   <Avatar className="w-8 h-8 bg-primary text-primary-foreground flex items-center justify-center">
+                     <Bot size={20} />
+                   </Avatar>
+                  <div className="p-3 rounded-lg bg-muted rounded-bl-none">
+                    <div className="flex items-center gap-2">
+                       <span className="w-2 h-2 bg-primary rounded-full animate-bounce delay-0"></span>
+                       <span className="w-2 h-2 bg-primary rounded-full animate-bounce delay-150"></span>
+                       <span className="w-2 h-2 bg-primary rounded-full animate-bounce delay-300"></span>
+                    </div>
+                  </div>
+                </div>
+              )}
+            </div>
+          </ScrollArea>
+        </CardContent>
+        <div className="p-4 border-t bg-background/80">
+          <div className="flex items-center gap-2">
+            <Input
+              className="flex-1"
+              placeholder="Ask a question about drug awareness..."
+              value={input}
+              onChange={(e) => setInput(e.target.value)}
+              onKeyPress={(e) => e.key === 'Enter' && !isLoading && handleSendMessage()}
+              disabled={isLoading}
+            />
+            <Button
+              onClick={handleSendMessage}
+              disabled={isLoading || !input.trim()}
+            >
+              {isLoading ? 'Sending...' : 'Send'}
+            </Button>
+          </div>
         </div>
-      </div>
-      <div className="p-6 bg-white">
-        <div className="flex">
-          <input
-            type="text"
-            className="flex-1 border rounded-l-lg p-3 focus:outline-none focus:ring focus:border-blue-300"
-            placeholder="Ask me about drug awareness..."
-            value={input}
-            onChange={(e) => setInput(e.target.value)}
-            onKeyPress={(e) => {
-              if (e.key === 'Enter') {
-                handleSendMessage();
-              }
-            }}
-          />
-          <button
-            className="bg-primary text-primary-foreground rounded-r-lg px-6 py-3 hover:bg-primary/90" // Use theme colors
-            onClick={handleSendMessage}
-            disabled={isLoading} // Disable send button while loading
-          >
-            {isLoading ? 'Sending...' : 'Send'}
-          </button>
-        </div>
-      </div>
+      </Card>
     </div>
   );
 }

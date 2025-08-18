@@ -11,17 +11,6 @@ import DetectionTrendChart from '@/components/dashboard/detection-trend-chart';
 import ThreatAnalyzer from '@/components/dashboard/threat-analyzer';
 import { analyzeThreatMessage, type AnalyzeThreatMessageOutput } from '@/ai/flows/analyze-threat-message';
 import { useToast } from '@/hooks/use-toast';
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogDescription,
-} from "@/components/ui/dialog";
-import { Badge } from '@/components/ui/badge';
-import { Separator } from '@/components/ui/separator';
-import { AlertCircle, CheckCircle } from 'lucide-react';
-
 
 const DashboardPage: FC = () => {
   const [messages, setMessages] = useState<ThreatMessage[]>([]);
@@ -36,8 +25,12 @@ const DashboardPage: FC = () => {
     setMessages(generateInitialMessages());
 
     const interval = setInterval(() => {
-      setMessages(prevMessages => [generateNewMessage(), ...prevMessages].slice(0, 50));
-    }, 5000);
+      setMessages(prevMessages => {
+        // Prevent messages from growing indefinitely and only keep the latest 50
+        const updatedMessages = [generateNewMessage(), ...prevMessages];
+        return updatedMessages.slice(0, 50);
+      });
+    }, 5000); // New message every 5 seconds
 
     return () => clearInterval(interval);
   }, []);
@@ -81,22 +74,20 @@ const DashboardPage: FC = () => {
   if (!isClient) {
     return (
       <div className="flex flex-col gap-6 p-4 md:p-6 lg:p-8">
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          <Skeleton className="h-[100px] w-full" />
-          <Skeleton className="h-[100px] w-full" />
-          <Skeleton className="h-[100px] w-full" />
+         <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
+          <Skeleton className="h-[120px] w-full" />
+          <Skeleton className="h-[120px] w-full" />
+          <Skeleton className="h-[120px] w-full" />
+           <Skeleton className="h-[120px] w-full" />
         </div>
         <div className="grid gap-6 lg:grid-cols-5">
           <div className="lg:col-span-3">
-            <Skeleton className="h-[400px] w-full" />
+            <Skeleton className="h-[600px] w-full" />
           </div>
           <div className="lg:col-span-2 flex flex-col gap-6">
-            <Skeleton className="h-[200px] w-full" />
-            <Skeleton className="h-[150px] w-full" />
+            <Skeleton className="h-[350px] w-full" />
+            <Skeleton className="h-[230px] w-full" />
           </div>
-        </div>
-        <div className="mt-8 flex justify-center">
-           <Skeleton className="h-10 w-1/2" />
         </div>
       </div>
     );

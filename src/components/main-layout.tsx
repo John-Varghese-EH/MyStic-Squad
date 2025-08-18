@@ -1,6 +1,7 @@
 'use client';
 
 import * as React from 'react';
+import { usePathname } from 'next/navigation';
 import {
   SidebarProvider,
   Sidebar,
@@ -20,11 +21,30 @@ import {
   FileText,
   BarChart3,
   Settings,
-  UserCircle,
+  Bot,
 } from 'lucide-react';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 
 export default function MainLayout({ children }: { children: React.ReactNode }) {
+  const pathname = usePathname();
+  const pageTitle = pathname.split('/').pop() || 'dashboard';
+
+  const menuItems = [
+    { href: '/', icon: <LayoutDashboard />, label: 'Dashboard', exact: true },
+    { href: '/alerts', icon: <AlertTriangle />, label: 'Alerts' },
+    { href: '/reports', icon: <FileText />, label: 'Reports' },
+    { href: '/analytics', icon: <BarChart3 />, label: 'Analytics' },
+    { href: '/chatbot', icon: <Bot />, label: 'Chatbot' },
+    { href: '/settings', icon: <Settings />, label: 'Settings' },
+  ];
+
+  const getIsActive = (href: string, exact = false) => {
+    if (exact) {
+      return pathname === href;
+    }
+    return pathname.startsWith(href) && (href !== '/' || pathname === '/');
+  };
+
   return (
     <SidebarProvider>
       <div className="flex min-h-screen">
@@ -37,42 +57,14 @@ export default function MainLayout({ children }: { children: React.ReactNode }) 
           </SidebarHeader>
           <SidebarContent>
             <SidebarMenu>
-              <SidebarMenuItem>
-                <SidebarMenuButton href="/dashboard" isActive>
-                  <LayoutDashboard />
-                  Dashboard
-                </SidebarMenuButton>
-              </SidebarMenuItem>
-              <SidebarMenuItem>
-                <SidebarMenuButton href="/alerts">
-                  <AlertTriangle />
-                  Alerts
-                </SidebarMenuButton>
-              </SidebarMenuItem>
-              <SidebarMenuItem>
-                <SidebarMenuButton href="/reports">
-                  <FileText />
-                  Reports
-                </SidebarMenuButton>
-              </SidebarMenuItem>
-              <SidebarMenuItem>
-                <SidebarMenuButton href="/analytics">
-                  <BarChart3 />
-                  Analytics
-                </SidebarMenuButton>
-              </SidebarMenuItem>
-              <SidebarMenuItem>
-                <SidebarMenuButton href="/chatbot">
-                  <UserCircle />
-                  Chatbot
-                </SidebarMenuButton>
-              </SidebarMenuItem>
-              <SidebarMenuItem>
-                <SidebarMenuButton href="#">
-                  <Settings />
-                  Settings
-                </SidebarMenuButton>
-              </SidebarMenuItem>
+              {menuItems.map((item) => (
+                <SidebarMenuItem key={item.href}>
+                  <SidebarMenuButton href={item.href} isActive={getIsActive(item.href, item.exact)}>
+                    {item.icon}
+                    {item.label}
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
+              ))}
             </SidebarMenu>
           </SidebarContent>
           <SidebarFooter>
@@ -92,7 +84,7 @@ export default function MainLayout({ children }: { children: React.ReactNode }) 
           <header className="sticky top-0 z-10 flex items-center h-14 px-4 border-b bg-background/80 backdrop-blur-sm">
             <SidebarTrigger className="md:hidden" />
             <div className="flex-1">
-              <h2 className="text-lg font-semibold">Dashboard</h2>
+              <h2 className="text-lg font-semibold capitalize">{pageTitle}</h2>
             </div>
           </header>
           {children}

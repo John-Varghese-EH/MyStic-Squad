@@ -26,22 +26,60 @@ const AnalyzeThreatMessageOutputSchema = z.object({
   warrantsReview: z.boolean().describe('Whether the message warrants manual review based on the threat level.'),
 });
 export type AnalyzeThreatMessageOutput = z.infer<typeof AnalyzeThreatMessageOutputSchema>;
-export async function analyzeThreatMessage(input: AnalyzeThreatMessageInput): Promise<AnalyzeThreatMessageOutput> {
-  // Dummy working functionality
-  const dummyOutput: AnalyzeThreatMessageOutput = {
-    threatLevel: 'low', // Default to low, can be changed for testing different scenarios
-    keywords: ['dummy', 'keywords'],
-    patterns: ['dummy pattern'],
-    reason: 'This is a dummy threat assessment for demonstration purposes.',
-    warrantsReview: false, // Default to false
-  };
 
-  // Simulate some logic to change the dummy output based on input
-  if (input.encryptedMessage.toLowerCase().includes('drug')) {
-    dummyOutput.threatLevel = 'high';
-    dummyOutput.warrantsReview = true;
-    dummyOutput.reason = 'Dummy detection of potential drug-related keyword.';
+const analyzeThreatMessagePrompt = ai.definePrompt({
+  name: 'analyzeThreatMessagePrompt',
+  input: {schema: AnalyzeThreatMessageInputSchema},
+  output: {schema: AnalyzeThreatMessageOutputSchema},
+  prompt: `You are an AI cybersecurity analyst. Your task is to analyze an encrypted message that may be related to illegal drug sales and assess its threat level.
+
+The message you need to analyze is: {{{encryptedMessage}}}
+
+Based on the content, identify the threat level ('low', 'medium', or 'high'), any suspicious keywords or patterns, and provide a brief reason for your assessment. Also, indicate if the message warrants manual review by a human analyst.
+
+Keywords could include drug names (slang or official), transaction-related terms (e.g., "payment", "delivery"), or quantities. Patterns might involve coded language, meeting arrangements, or attempts to evade detection.
+
+If the message contains clear indicators of a high-risk transaction (e.g., large quantities, specific hard drugs, urgent meeting plans), classify it as 'high' and warranting review. If it's ambiguous but contains some suspicious elements, classify it as 'medium'. If it seems benign or unrelated, classify it as 'low'.`,
+});
+
+const analyzeThreatMessageFlow = ai.defineFlow(
+  {
+    name: 'analyzeThreatMessageFlow',
+    inputSchema: AnalyzeThreatMessageInputSchema,
+    outputSchema: AnalyzeThreatMessageOutputSchema,
+  },
+  async (input) => {
+    const {output} = await analyzeThreatMessagePrompt(input);
+    return output!;
+  }
+);
+
+
+export async function analyzeThreatMessage(input: AnalyzeThreatMessageInput): Promise<AnalyzeThreatMessageOutput> {
+  // For demonstration, we'll use a mix of dummy logic and a real AI call.
+  // This allows for quick, predictable responses for certain inputs,
+  // while still having full AI capabilities.
+  const lowerCaseMessage = input.encryptedMessage.toLowerCase();
+
+  if (lowerCaseMessage.includes('untraceable') || lowerCaseMessage.includes('kilo')) {
+    return {
+      threatLevel: 'high',
+      keywords: ['untraceable', 'kilo', 'urgent'],
+      patterns: ['High-quantity transaction', 'Evasion technique'],
+      reason: 'Message discusses large quantities and untraceable methods, indicating a high-risk illicit transaction.',
+      warrantsReview: true,
+    };
+  }
+  if (lowerCaseMessage.includes('party pack')) {
+     return {
+      threatLevel: 'low',
+      keywords: ['party pack'],
+      patterns: ['Slang for recreational drugs'],
+      reason: 'Use of slang indicates potential recreational drug use, but no immediate high-level threat.',
+      warrantsReview: false,
+    };
   }
 
-  return dummyOutput;
+  // If no dummy logic matches, call the actual AI flow
+  return analyzeThreatMessageFlow(input);
 }
