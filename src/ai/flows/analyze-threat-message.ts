@@ -26,42 +26,22 @@ const AnalyzeThreatMessageOutputSchema = z.object({
   warrantsReview: z.boolean().describe('Whether the message warrants manual review based on the threat level.'),
 });
 export type AnalyzeThreatMessageOutput = z.infer<typeof AnalyzeThreatMessageOutputSchema>;
-
 export async function analyzeThreatMessage(input: AnalyzeThreatMessageInput): Promise<AnalyzeThreatMessageOutput> {
-  return analyzeThreatMessageFlow(input);
-}
+  // Dummy working functionality
+  const dummyOutput: AnalyzeThreatMessageOutput = {
+    threatLevel: 'low', // Default to low, can be changed for testing different scenarios
+    keywords: ['dummy', 'keywords'],
+    patterns: ['dummy pattern'],
+    reason: 'This is a dummy threat assessment for demonstration purposes.',
+    warrantsReview: false, // Default to false
+  };
 
-const prompt = ai.definePrompt({
-  name: 'analyzeThreatMessagePrompt',
-  input: {schema: AnalyzeThreatMessageInputSchema},
-  output: {schema: AnalyzeThreatMessageOutputSchema},
-  prompt: `You are an expert cybersecurity analyst specializing in identifying illegal drug sales activities in encrypted messages.
-
-You will analyze the provided encrypted message to identify potential threats, assess the threat level, and extract relevant keywords and patterns.
-
-Based on your analysis, you will determine whether the message warrants manual review.
-
-Encrypted Message: {{{encryptedMessage}}}
-
-Respond in JSON format.
-`,
-});
-
-const analyzeThreatMessageFlow = ai.defineFlow(
-  {
-    name: 'analyzeThreatMessageFlow',
-    inputSchema: AnalyzeThreatMessageInputSchema,
-    outputSchema: AnalyzeThreatMessageOutputSchema,
-  },
-  async input => {
-    const {output} = await prompt(input);
-
-    // Logic to determine if message warrants manual review
-    const warrantsReview = output!.threatLevel === 'high' || output!.threatLevel === 'medium';
-
-    return {
-      ...output!,
-      warrantsReview,
-    };
+  // Simulate some logic to change the dummy output based on input
+  if (input.encryptedMessage.toLowerCase().includes('drug')) {
+    dummyOutput.threatLevel = 'high';
+    dummyOutput.warrantsReview = true;
+    dummyOutput.reason = 'Dummy detection of potential drug-related keyword.';
   }
-);
+
+  return dummyOutput;
+}
