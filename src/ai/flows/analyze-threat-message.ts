@@ -10,6 +10,7 @@
 
 import {ai} from '@/ai/genkit';
 import {z} from 'genkit';
+import { getSuspiciousKeywords } from '@/lib/osint-service';
 
 const AnalyzeThreatMessageInputSchema = z.object({
   encryptedMessage: z.string().describe('The encrypted message to analyze.'),
@@ -49,6 +50,9 @@ const analyzeThreatMessageFlow = ai.defineFlow(
     outputSchema: AnalyzeThreatMessageOutputSchema,
   },
   async (input) => {
+    // In a more advanced scenario, we could pass the dynamically fetched keywords
+    // into the prompt itself to let the AI use the latest OSINT data for its analysis.
+    // For now, we are keeping the AI prompt generic and using keywords for a separate, deterministic check.
     const {output} = await analyzeThreatMessagePrompt(input);
     return output!;
   }
@@ -56,12 +60,10 @@ const analyzeThreatMessageFlow = ai.defineFlow(
 
 
 export async function analyzeThreatMessage(input: AnalyzeThreatMessageInput): Promise<AnalyzeThreatMessageOutput> {
+  const { high: highRiskKeywords, medium: mediumRiskKeywords, low: lowRiskKeywords } = await getSuspiciousKeywords();
+  
   const lowerCaseMessage = input.encryptedMessage.toLowerCase();
   
-  const highRiskKeywords = ['coke', 'heroin', 'meth', 'untraceable', 'kilo', 'laundering'];
-  const mediumRiskKeywords = ['pills', 'molly', 'acid', 'powder', 'grams', 'shipment', 'meetup', 'crypto'];
-  const lowRiskKeywords = ['green', 'smoke', 'edibles', 'party pack', '420', 'oz', 'delivery', 'gram', 'drop', 'shipment'];
-
   const foundHighKeywords = highRiskKeywords.filter(kw => lowerCaseMessage.includes(kw));
   const foundMediumKeywords = mediumRiskKeywords.filter(kw => lowerCaseMessage.includes(kw));
   const foundLowKeywords = lowRiskKeywords.filter(kw => lowerCaseMessage.includes(kw));
@@ -71,7 +73,7 @@ export async function analyzeThreatMessage(input: AnalyzeThreatMessageInput): Pr
       threatLevel: 'high',
       keywords: foundHighKeywords,
       patterns: ['High-risk keywords detected'],
-      reason: `Message contains high-risk keywords: ${foundHighKeywords.join(', ')}.`,
+      reason: `Message contains high-risk keywords from OSINT source: ${foundHighKeywords.join(', ')}.`,
       warrantsReview: true,
     };
   }
@@ -81,7 +83,7 @@ export async function analyzeThreatMessage(input: AnalyzeThreatMessageInput): Pr
       threatLevel: 'medium',
       keywords: foundMediumKeywords,
       patterns: ['Medium-risk keywords detected'],
-      reason: `Message contains medium-risk keywords: ${foundMediumKeywords.join(', ')}.`,
+      reason: `Message contains medium-risk keywords from OSINT source: ${foundMediumKeywords.join(', ')}.`,
       warrantsReview: true,
     };
   }
@@ -91,16 +93,11 @@ export async function analyzeThreatMessage(input: AnalyzeThreatMessageInput): Pr
       threatLevel: 'low',
       keywords: foundLowKeywords,
       patterns: ['Low-risk keywords detected'],
-      reason: `Message contains low-risk keywords: ${foundLowKeywords.join(', ')}.`,
+      reason: `Message contains low-risk keywords from OSINT source: ${foundLowKeywords.join(', ')}.`,
       warrantsReview: false,
     };
   }
 
-  return {
-    threatLevel: 'low',
-    keywords: [],
-    patterns: ['No specific keywords detected'],
-    reason: 'No suspicious keywords were found in the message.',
-    warrantsReview: false,
-  };
+  // Fallback to the AI model if no keywords are matched.
+  return analyzeThreatMessageFlow(input);
 }
