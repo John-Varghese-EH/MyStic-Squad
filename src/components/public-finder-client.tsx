@@ -7,209 +7,254 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
-import { Loader2, Search } from 'lucide-react';
+import { Loader2, Search, Trash2, X } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
-import { analyzeWebText, type AnalyzeWebTextInput, type AnalyzeWebTextOutput } from '@/ai/flows/analyze-web-text';
 import { Badge } from '@/components/ui/badge';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { format } from 'date-fns';
 import { Skeleton } from '../ui/skeleton';
 
-type ScanResult = AnalyzeWebTextOutput & {
-    source: string;
-    timestamp: Date;
-    id: string;
+type KeywordRiskLevel = 'Normal' | 'Risk' | 'High Risk';
+
+type DetectedKeyword = {
+  word: string;
+  count: number;
+  risk: KeywordRiskLevel;
 };
 
+type ScanResult = {
+  id: string;
+  sourceText: string;
+  detectedKeywords: DetectedKeyword[];
+  overallRisk: KeywordRiskLevel;
+  totalOccurrences: number;
+  timestamp: string;
+};
+
+const getRiskLevel = (count: number): KeywordRiskLevel => {
+  if (count > 100) return 'High Risk';
+  if (count > 50) return 'Risk';
+  return 'Normal';
+};
+
+const getRiskBadgeVariant = (level: KeywordRiskLevel) => {
+  if (level === 'High Risk') return 'destructive';
+  if (level === 'Risk') return 'secondary';
+  return 'default';
+};
+
+
 const PublicFinderClient: React.FC = () => {
-    const [sourceUrl, setSourceUrl] = useState('');
-    const [rawText, setRawText] = useState('');
-    const [isSubmitting, setIsSubmitting] = useState(false);
+    const [textToAnalyze, setTextToAnalyze] = useState('');
+    const [keywords, setKeywords] = useState<string[]>([]);
+    const [newKeyword, setNewKeyword] = useState('');
+    const [isAnalyzing, setIsAnalyzing] = useState(false);
     const [latestResult, setLatestResult] = useState<ScanResult | null>(null);
-    const [scanHistory, setScanHistory] = useState<ScanResult[]>([]);
     const { toast } = useToast();
 
-    const handleSubmit = async (event: React.FormEvent) => {
-        event.preventDefault();
-        
-        const textToAnalyze = rawText.trim() || sourceUrl.trim();
-        const source = rawText.trim() ? 'Raw Text' : sourceUrl;
-
-        if (!textToAnalyze) {
-            toast({
-                variant: 'destructive',
-                title: 'Error',
-                description: 'Please provide a URL or raw text to analyze.',
-            });
-            return;
-        }
-
-        setIsSubmitting(true);
-        setLatestResult(null);
-
+    useEffect(() => {
         try {
-            const input: AnalyzeWebTextInput = rawText.trim() 
-                ? { text: rawText } 
-                : { url: sourceUrl };
-
-            const result = await analyzeWebText(input);
-            const newResult: ScanResult = {
-                ...result,
-                source: source,
-                timestamp: new Date(),
-                id: Math.random().toString(36).substring(7),
-            };
-
-            setLatestResult(newResult);
-            setScanHistory(prev => [newResult, ...prev]);
-
+            const savedKeywords = localStorage.getItem('publicFinderKeywords');
+            if (savedKeywords) {
+                setKeywords(JSON.parse(savedKeywords));
+            }
         } catch (error) {
-            console.error("Analysis error:", error);
-            toast({
-                variant: 'destructive',
-                title: 'Analysis Failed',
-                description: 'Could not analyze the provided content. Please try again.',
-            });
-        } finally {
-            setIsSubmitting(false);
-            setSourceUrl('');
-            setRawText('');
+            console.error("Failed to load keywords from localStorage", error);
+        }
+    }, []);
+
+    const handleAddKeyword = () => {
+        const trimmedKeyword = newKeyword.trim().toLowerCase();
+        if (trimmedKeyword && !keywords.includes(trimmedKeyword)) {
+            const updatedKeywords = [...keywords, trimmedKeyword];
+            setKeywords(updatedKeywords);
+            localStorage.setItem('publicFinderKeywords', JSON.stringify(updatedKeywords));
+            setNewKeyword('');
+            toast({ title: 'Keyword Added', description: `"${trimmedKeyword}" has been saved.`});
         }
     };
 
-    const getRiskBadgeVariant = (level: 'low' | 'medium' | 'high') => {
-        if (level === 'high') return 'destructive';
-        if (level === 'medium') return 'secondary';
-        return 'default';
-    }
+    const handleDeleteKeyword = (keywordToDelete: string) => {
+        const updatedKeywords = keywords.filter(kw => kw !== keywordToDelete);
+        setKeywords(updatedKeywords);
+        localStorage.setItem('publicFinderKeywords', JSON.stringify(updatedKeywords));
+        toast({ title: 'Keyword Removed', description: `"${keywordToDelete}" has been removed.`});
+    };
+
+    const handleAnalyze = () => {
+        if (!textToAnalyze.trim()) {
+            toast({ variant: 'destructive', title: 'Input Required', description: 'Please paste some text to analyze.' });
+            return;
+        }
+        if (keywords.length === 0) {
+            toast({ variant: 'destructive', title: 'Keywords Required', description: 'Please add at least one keyword to scan for.' });
+            return;
+        }
+        setIsAnalyzing(true);
+
+        const lowerCaseText = textToAnalyze.toLowerCase();
+        let totalOccurrences = 0;
+
+        const detectedKeywords: DetectedKeyword[] = keywords.map(kw => {
+            const regex = new RegExp(`\\b${kw}\\b`, 'g');
+            const count = (lowerCaseText.match(regex) || []).length;
+            totalOccurrences += count;
+            return {
+                word: kw,
+                count,
+                risk: getRiskLevel(count),
+            };
+        }).filter(kw => kw.count > 0);
+
+        const avgOccurrences = detectedKeywords.length > 0 ? totalOccurrences / detectedKeywords.length : 0;
+        const overallRisk = getRiskLevel(avgOccurrences);
+
+        const newResult: ScanResult = {
+            id: new Date().toISOString(),
+            sourceText: textToAnalyze,
+            detectedKeywords,
+            overallRisk,
+            totalOccurrences,
+            timestamp: new Date().toLocaleString(),
+        };
+
+        setLatestResult(newResult);
+        setIsAnalyzing(false);
+    };
 
     return (
         <div className="container mx-auto p-4 md:p-8 space-y-8">
             <div>
                 <h1 className="text-3xl font-bold">Public Content Finder</h1>
-                <p className="text-muted-foreground">Analyze public websites or text for suspicious keywords.</p>
+                <p className="text-muted-foreground">Analyze text for custom keywords and assess risk.</p>
             </div>
 
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-              <div className="lg:col-span-1">
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 items-start">
+              <div className="lg:col-span-1 space-y-6">
                 <Card>
                     <CardHeader>
-                        <CardTitle>Content Scanner</CardTitle>
-                        <CardDescription>Enter a URL or paste raw text below.</CardDescription>
+                        <CardTitle>Content to Analyze</CardTitle>
                     </CardHeader>
                     <CardContent>
-                        <form onSubmit={handleSubmit} className="space-y-6">
-                            <div className="space-y-2">
-                                <Label htmlFor="url">Website URL</Label>
-                                <Input
-                                    id="url"
-                                    placeholder="https://example.com"
-                                    value={sourceUrl}
-                                    onChange={(e) => {
-                                        setSourceUrl(e.target.value)
-                                        setRawText('')
-                                    }}
-                                    disabled={isSubmitting || !!rawText}
-                                />
-                            </div>
-                            <div className="text-center text-sm text-muted-foreground">OR</div>
-                             <div className="space-y-2">
-                                <Label htmlFor="rawText">Raw Text / HTML</Label>
-                                <Textarea
-                                    id="rawText"
-                                    placeholder="Paste content to analyze..."
-                                    rows={8}
-                                    value={rawText}
-                                    onChange={(e) => {
-                                        setRawText(e.target.value)
-                                        setSourceUrl('')
-                                    }}
-                                    disabled={isSubmitting || !!sourceUrl}
-                                />
-                            </div>
-                            <Button type="submit" disabled={isSubmitting} className="w-full">
-                                {isSubmitting ? (
-                                    <>
-                                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                                        Analyzing...
-                                    </>
-                                ) : (
-                                    <>
-                                        <Search className="mr-2 h-4 w-4" />
-                                        Analyze Content
-                                    </>
-                                )}
-                            </Button>
-                        </form>
+                        <Textarea
+                            placeholder="Paste any text content here to start..."
+                            rows={10}
+                            value={textToAnalyze}
+                            onChange={(e) => setTextToAnalyze(e.target.value)}
+                        />
                     </CardContent>
                 </Card>
+
+                <Card>
+                    <CardHeader>
+                        <CardTitle>Keyword Management</CardTitle>
+                        <CardDescription>Add or remove keywords for scanning.</CardDescription>
+                    </CardHeader>
+                    <CardContent className="space-y-4">
+                        <div className="flex gap-2">
+                           <Input
+                                placeholder="Add a new keyword"
+                                value={newKeyword}
+                                onChange={(e) => setNewKeyword(e.target.value)}
+                                onKeyDown={(e) => e.key === 'Enter' && handleAddKeyword()}
+                           />
+                           <Button onClick={handleAddKeyword}>Add</Button>
+                        </div>
+                        <div className="space-y-2">
+                            <Label>Saved Keywords</Label>
+                             {keywords.length > 0 ? (
+                                <div className="max-h-40 overflow-y-auto pr-2 flex flex-wrap gap-2">
+                                    {keywords.map(kw => (
+                                        <Badge key={kw} variant="secondary" className="flex items-center gap-1.5">
+                                            {kw}
+                                            <button onClick={() => handleDeleteKeyword(kw)} className="rounded-full hover:bg-muted-foreground/20 p-0.5">
+                                                <X className="h-3 w-3" />
+                                            </button>
+                                        </Badge>
+                                    ))}
+                                </div>
+                            ) : (
+                                <p className="text-xs text-muted-foreground text-center py-2">No keywords saved.</p>
+                            )}
+                        </div>
+                    </CardContent>
+                </Card>
+                <Button onClick={handleAnalyze} disabled={isAnalyzing} size="lg" className="w-full">
+                    {isAnalyzing ? (
+                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    ) : (
+                        <Search className="mr-2 h-4 w-4" />
+                    )}
+                    Analyze Content
+                </Button>
               </div>
 
               <div className="lg:col-span-2">
-                {latestResult && (
-                    <Card className="mb-8">
-                        <CardHeader>
-                            <CardTitle>Latest Scan Result</CardTitle>
-                            <CardDescription>
-                                Analysis for: <span className="font-mono">{latestResult.source.length > 50 ? `${latestResult.source.substring(0, 50)}...` : latestResult.source}</span>
-                            </CardDescription>
-                        </CardHeader>
-                        <CardContent className="space-y-4">
-                            <div className="flex justify-between items-center">
-                               <span className="font-semibold text-muted-foreground">Risk Level</span>
-                               <Badge variant={getRiskBadgeVariant(latestResult.riskLevel)} className="capitalize">{latestResult.riskLevel}</Badge>
-                            </div>
-                            <div>
-                               <h4 className="font-semibold mb-2 text-muted-foreground">Detected Keywords ({latestResult.totalOccurrences})</h4>
-                               {latestResult.detectedKeywords.length > 0 ? (
-                                 <div className="flex flex-wrap gap-2">
-                                     {latestResult.detectedKeywords.map((kw, index) => (
-                                         <Badge key={`${kw.word}-${index}`} variant="outline">
-                                             {kw.word} ({kw.count})
-                                         </Badge>
-                                     ))}
-                                 </div>
-                               ) : (
-                                 <p className="text-sm text-muted-foreground">No suspicious keywords found.</p>
-                               )}
-                            </div>
-                        </CardContent>
-                    </Card>
-                )}
                 <Card>
                     <CardHeader>
-                        <CardTitle>Scan History</CardTitle>
-                        <CardDescription>Your past 10 content scans.</CardDescription>
+                        <CardTitle>Analysis Result</CardTitle>
+                        <CardDescription>Detected keywords and risk assessment.</CardDescription>
                     </CardHeader>
                     <CardContent>
-                        <Table>
-                            <TableHeader>
-                                <TableRow>
-                                    <TableHead>Source</TableHead>
-                                    <TableHead>Risk</TableHead>
-                                    <TableHead>Keywords</TableHead>
-                                    <TableHead>Date</TableHead>
-                                </TableRow>
-                            </TableHeader>
-                            <TableBody>
-                                {scanHistory.length > 0 ? scanHistory.slice(0, 10).map(scan => (
-                                    <TableRow key={scan.id}>
-                                        <TableCell className="max-w-[150px] truncate font-mono">{scan.source}</TableCell>
-                                        <TableCell>
-                                            <Badge variant={getRiskBadgeVariant(scan.riskLevel)} className="capitalize">{scan.riskLevel}</Badge>
-                                        </TableCell>
-                                        <TableCell>{scan.totalOccurrences}</TableCell>
-                                        <TableCell className="text-muted-foreground">{format(scan.timestamp, 'MMM d, h:mm a')}</TableCell>
-                                    </TableRow>
-                                )) : (
-                                    <TableRow>
-                                        <TableCell colSpan={4} className="h-24 text-center">
-                                            No scan history yet.
-                                        </TableCell>
-                                    </TableRow>
-                                )}
-                            </TableBody>
-                        </Table>
+                        {isAnalyzing ? (
+                            <div className="text-center py-10">
+                                <Loader2 className="mx-auto h-8 w-8 animate-spin text-primary" />
+                                <p className="mt-2 text-muted-foreground">Analyzing...</p>
+                            </div>
+                        ) : latestResult ? (
+                            <div className="space-y-6">
+                                <Card className="bg-muted/30">
+                                    <CardHeader className="flex-row items-center justify-between pb-2">
+                                        <CardTitle className="text-base font-medium">Overall Risk Rating</CardTitle>
+                                    </CardHeader>
+                                    <CardContent>
+                                        <Badge 
+                                          variant={getRiskBadgeVariant(latestResult.overallRisk)} 
+                                          className="text-2xl font-bold capitalize"
+                                        >
+                                          {latestResult.overallRisk}
+                                        </Badge>
+                                        <p className="text-xs text-muted-foreground mt-1">
+                                          Based on an average of { (latestResult.totalOccurrences / (latestResult.detectedKeywords.length || 1)).toFixed(2)} occurrences per detected keyword.
+                                        </p>
+                                    </CardContent>
+                                </Card>
+                                
+                                <div>
+                                <h4 className="font-semibold mb-2">Detected Keyword Breakdown</h4>
+                                <Table>
+                                    <TableHeader>
+                                        <TableRow>
+                                            <TableHead>Keyword</TableHead>
+                                            <TableHead className="text-center">Frequency</TableHead>
+                                            <TableHead className="text-right">Risk Level</TableHead>
+                                        </TableRow>
+                                    </TableHeader>
+                                    <TableBody>
+                                        {latestResult.detectedKeywords.length > 0 ? latestResult.detectedKeywords.map(kw => (
+                                            <TableRow key={kw.word}>
+                                                <TableCell className="font-medium">{kw.word}</TableCell>
+                                                <TableCell className="text-center font-mono">{kw.count}</TableCell>
+                                                <TableCell className="text-right">
+                                                    <Badge variant={getRiskBadgeVariant(kw.risk)} className="capitalize">{kw.risk}</Badge>
+                                                </TableCell>
+                                            </TableRow>
+                                        )) : (
+                                            <TableRow>
+                                                <TableCell colSpan={3} className="h-24 text-center">
+                                                    No keywords found in the text.
+                                                </TableCell>
+                                            </TableRow>
+                                        )}
+                                    </TableBody>
+                                </Table>
+                                </div>
+
+                            </div>
+                        ) : (
+                           <div className="text-center text-muted-foreground py-10">
+                                <p>Analysis results will appear here.</p>
+                           </div>
+                        )}
                     </CardContent>
                 </Card>
               </div>
@@ -217,7 +262,6 @@ const PublicFinderClient: React.FC = () => {
         </div>
     );
 };
-
 
 export default () => (
     <React.Suspense fallback={
@@ -239,5 +283,3 @@ export default () => (
         <PublicFinderClient />
     </React.Suspense>
 );
-
-    
