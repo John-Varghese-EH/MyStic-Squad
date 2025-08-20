@@ -2,6 +2,7 @@ import type { Metadata } from 'next';
 import './globals.css';
 import { Toaster } from '@/components/ui/toaster';
 import MainLayout from '@/components/main-layout';
+import { ProfileProvider } from '@/hooks/use-profile';
 
 export const metadata: Metadata = {
   title: 'ShadowNet Intel',
@@ -24,7 +25,9 @@ export default function RootLayout({
         ></link>
       </head>
       <body className="font-body antialiased">
-        <MainLayout>{children}</MainLayout>
+        <ProfileProvider>
+          <MainLayout>{children}</MainLayout>
+        </ProfileProvider>
         <Toaster />
       </body>
     </html>

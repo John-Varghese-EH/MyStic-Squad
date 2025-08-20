@@ -10,49 +10,22 @@ import { Separator } from '@/components/ui/separator';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { useToast } from '@/hooks/use-toast';
 import { Skeleton } from '@/components/ui/skeleton';
+import { useProfile } from '@/hooks/use-profile';
 
 const SettingsPage: React.FC = () => {
   const { toast } = useToast();
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const { profile, setProfile, isLoading } = useProfile();
+  
+  const [localProfile, setLocalProfile] = useState(profile);
 
-  const [profile, setProfile] = useState({
-    name: '',
-    email: '',
-    avatar: '',
-  });
-
-  const [isLoading, setIsLoading] = useState(true);
-
-  // Load data from localStorage on component mount
   useEffect(() => {
-    try {
-      const savedProfile = localStorage.getItem('userProfile');
-      if (savedProfile) {
-        setProfile(JSON.parse(savedProfile));
-      } else {
-        // Set default values if nothing is in localStorage
-        setProfile({
-            name: 'Operator',
-            email: 'operator@example.com',
-            avatar: 'https://placehold.co/100x100.png',
-        });
-      }
-    } catch (error) {
-        console.error("Failed to parse user profile from localStorage", error);
-        // Set default values on error
-         setProfile({
-            name: 'Operator',
-            email: 'operator@example.com',
-            avatar: 'https://placehold.co/100x100.png',
-        });
-    } finally {
-        setIsLoading(false);
-    }
-  }, []);
+    setLocalProfile(profile);
+  }, [profile]);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { id, value } = e.target;
-    setProfile(prevProfile => ({
+    setLocalProfile(prevProfile => ({
       ...prevProfile,
       [id]: value,
     }));
@@ -63,7 +36,7 @@ const SettingsPage: React.FC = () => {
       const file = e.target.files[0];
       const reader = new FileReader();
       reader.onloadend = () => {
-        setProfile(prevProfile => ({
+        setLocalProfile(prevProfile => ({
           ...prevProfile,
           avatar: reader.result as string,
         }));
@@ -73,14 +46,14 @@ const SettingsPage: React.FC = () => {
   };
 
   const handleSaveProfile = () => {
-    localStorage.setItem('userProfile', JSON.stringify(profile));
+    setProfile(localProfile);
     toast({
       title: 'Profile Saved',
       description: 'Your profile has been updated successfully.',
     });
   };
 
-  if (isLoading) {
+  if (isLoading || !localProfile) {
     return (
        <div className="container mx-auto p-4 md:p-8 space-y-8">
          <Skeleton className="h-9 w-1/4" />
@@ -124,8 +97,8 @@ const SettingsPage: React.FC = () => {
         <CardContent className="space-y-6">
             <div className="flex items-center gap-4">
                 <Avatar className="h-16 w-16">
-                  <AvatarImage src={profile.avatar} alt="Operator" data-ai-hint="profile picture" />
-                  <AvatarFallback>{profile.name?.substring(0,2).toUpperCase() || 'OP'}</AvatarFallback>
+                  <AvatarImage src={localProfile.avatar} alt="Operator" data-ai-hint="profile picture" />
+                  <AvatarFallback>{localProfile.name?.substring(0,2).toUpperCase() || 'OP'}</AvatarFallback>
                 </Avatar>
                 <Input 
                     type="file" 
@@ -139,11 +112,11 @@ const SettingsPage: React.FC = () => {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label htmlFor="name">Name</Label>
-                <Input id="name" value={profile.name} onChange={handleChange} />
+                <Input id="name" value={localProfile.name} onChange={handleChange} />
               </div>
               <div className="space-y-2">
                 <Label htmlFor="email">Email</Label>
-                <Input id="email" type="email" value={profile.email} onChange={handleChange} />
+                <Input id="email" type="email" value={localProfile.email} onChange={handleChange} />
               </div>
           </div>
            <Button onClick={handleSaveProfile}>Save Profile</Button>

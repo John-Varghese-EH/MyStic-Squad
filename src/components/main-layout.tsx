@@ -1,3 +1,4 @@
+
 'use client';
 
 import * as React from 'react';
@@ -27,6 +28,8 @@ import {
   Search,
 } from 'lucide-react';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { useProfile } from '@/hooks/use-profile';
+import { Skeleton } from './ui/skeleton';
 
 const CustomLogo = () => (
   <svg
@@ -67,6 +70,7 @@ const CustomLogo = () => (
 
 export default function MainLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
+  const { profile, isLoading } = useProfile();
   const pageTitle = (pathname.split('/').pop() || 'dashboard').replace('-', ' ');
 
   const menuItems = [
@@ -114,14 +118,26 @@ export default function MainLayout({ children }: { children: React.ReactNode }) 
           </SidebarContent>
           <SidebarFooter>
             <div className="flex items-center gap-3">
-               <Avatar className="h-9 w-9">
-                  <AvatarImage src="https://placehold.co/40x40.png" alt="Operator" data-ai-hint="profile picture" />
-                  <AvatarFallback>OP</AvatarFallback>
-                </Avatar>
-              <div className="flex flex-col">
-                <span className="text-sm font-semibold text-foreground">Operator</span>
-                <span className="text-xs text-muted-foreground">Level 5 Analyst</span>
-              </div>
+              {isLoading ? (
+                <>
+                  <Skeleton className="h-9 w-9 rounded-full" />
+                  <div className="space-y-2">
+                    <Skeleton className="h-4 w-[80px]" />
+                    <Skeleton className="h-3 w-[60px]" />
+                  </div>
+                </>
+              ) : (
+                <>
+                   <Avatar className="h-9 w-9">
+                      <AvatarImage src={profile.avatar} alt="Operator" data-ai-hint="profile picture" />
+                      <AvatarFallback>{profile.name?.substring(0,2).toUpperCase() || 'OP'}</AvatarFallback>
+                    </Avatar>
+                  <div className="flex flex-col">
+                    <span className="text-sm font-semibold text-foreground">{profile.name}</span>
+                    <span className="text-xs text-muted-foreground">Level 5 Analyst</span>
+                  </div>
+                </>
+              )}
             </div>
           </SidebarFooter>
         </Sidebar>
