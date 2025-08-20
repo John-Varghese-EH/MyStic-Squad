@@ -66,12 +66,10 @@ export default function MainLayout({ children }: { children: React.ReactNode }) 
             <SidebarMenu>
               {menuItems.map((item) => (
                 <SidebarMenuItem key={item.href}>
-                  <Link href={item.href} passHref legacyBehavior>
-                    <SidebarMenuButton asChild isActive={getIsActive(item.href, item.exact)}>
-                      <a>
+                  <Link href={item.href}>
+                    <SidebarMenuButton isActive={getIsActive(item.href, item.exact)}>
                         {item.icon}
                         {item.label}
-                      </a>
                     </SidebarMenuButton>
                   </Link>
                 </SidebarMenuItem>
