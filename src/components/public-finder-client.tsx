@@ -7,7 +7,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
-import { Loader2, Search, Trash2, X } from 'lucide-react';
+import { Loader2, Search, X } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { Badge } from '@/components/ui/badge';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
@@ -230,8 +230,8 @@ const PublicFinderClient: React.FC = () => {
                                         </TableRow>
                                     </TableHeader>
                                     <TableBody>
-                                        {latestResult.detectedKeywords.length > 0 ? latestResult.detectedKeywords.map(kw => (
-                                            <TableRow key={kw.word}>
+                                        {latestResult.detectedKeywords.length > 0 ? latestResult.detectedKeywords.map((kw, index) => (
+                                            <TableRow key={`${kw.word}-${index}`}>
                                                 <TableCell className="font-medium">{kw.word}</TableCell>
                                                 <TableCell className="text-center font-mono">{kw.count}</TableCell>
                                                 <TableCell className="text-right">
@@ -283,3 +283,5 @@ export default () => (
         <PublicFinderClient />
     </React.Suspense>
 );
+
+    
