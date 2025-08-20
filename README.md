@@ -1,3 +1,3 @@
-# MyStic Squad
+# Mystic Squad
 
-John-Varghese
+This is a cybersecurity and awareness application.
