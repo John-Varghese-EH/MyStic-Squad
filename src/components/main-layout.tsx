@@ -1,6 +1,7 @@
 'use client';
 
 import * as React from 'react';
+import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import {
   SidebarProvider,
@@ -33,15 +34,15 @@ export default function MainLayout({ children }: { children: React.ReactNode }) 
   const pageTitle = (pathname.split('/').pop() || 'dashboard').replace('-', ' ');
 
   const menuItems = [
-    { href: '/', icon: <LayoutDashboard />, label: 'Dashboard', exact: true },
-    { href: '/alerts', icon: <AlertTriangle />, label: 'Alerts' },
-    { href: '/reports', icon: <FileText />, label: 'Reports' },
-    { href: '/analytics', icon: <BarChart3 />, label: 'Analytics' },
-    { href: '/public-finder', icon: <Search />, label: 'Public Finder' },
-    { href: '/chatbot', icon: <Bot />, label: 'Chatbot' },
-    { href: '/awareness', icon: <LifeBuoy />, label: 'Awareness' },
-    { href: '/case-management', icon: <Briefcase />, label: 'Case Management' },
-    { href: '/settings', icon: <Settings />, label: 'Settings' },
+    { href: '/', label: 'Dashboard', icon: <LayoutDashboard />, exact: true },
+    { href: '/alerts', label: 'Alerts', icon: <AlertTriangle /> },
+    { href: '/reports', label: 'Reports', icon: <FileText /> },
+    { href: '/analytics', label: 'Analytics', icon: <BarChart3 /> },
+    { href: '/public-finder', label: 'Public Finder', icon: <Search /> },
+    { href: '/chatbot', label: 'Chatbot', icon: <Bot /> },
+    { href: '/awareness', label: 'Awareness', icon: <LifeBuoy /> },
+    { href: '/case-management', label: 'Case Management', icon: <Briefcase /> },
+    { href: '/settings', label: 'Settings', icon: <Settings /> },
   ];
 
   const getIsActive = (href: string, exact = false) => {
@@ -65,10 +66,14 @@ export default function MainLayout({ children }: { children: React.ReactNode }) 
             <SidebarMenu>
               {menuItems.map((item) => (
                 <SidebarMenuItem key={item.href}>
-                  <SidebarMenuButton href={item.href} isActive={getIsActive(item.href, item.exact)}>
-                    {item.icon}
-                    {item.label}
-                  </SidebarMenuButton>
+                  <Link href={item.href} passHref legacyBehavior>
+                    <SidebarMenuButton asChild isActive={getIsActive(item.href, item.exact)}>
+                      <a>
+                        {item.icon}
+                        {item.label}
+                      </a>
+                    </SidebarMenuButton>
+                  </Link>
                 </SidebarMenuItem>
               ))}
             </SidebarMenu>
