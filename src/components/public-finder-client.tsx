@@ -13,6 +13,7 @@ import { analyzeWebText, type AnalyzeWebTextInput, type AnalyzeWebTextOutput } f
 import { Badge } from '@/components/ui/badge';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { format } from 'date-fns';
+import { Skeleton } from '../ui/skeleton';
 
 type ScanResult = AnalyzeWebTextOutput & {
     source: string;
@@ -26,12 +27,7 @@ const PublicFinderClient: React.FC = () => {
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [latestResult, setLatestResult] = useState<ScanResult | null>(null);
     const [scanHistory, setScanHistory] = useState<ScanResult[]>([]);
-    const [isClient, setIsClient] = useState(false);
     const { toast } = useToast();
-
-    useEffect(() => {
-        setIsClient(true);
-    }, []);
 
     const handleSubmit = async (event: React.FormEvent) => {
         event.preventDefault();
@@ -85,10 +81,6 @@ const PublicFinderClient: React.FC = () => {
         if (level === 'high') return 'destructive';
         if (level === 'medium') return 'secondary';
         return 'default';
-    }
-    
-    if (!isClient) {
-        return null;
     }
 
     return (
@@ -226,4 +218,26 @@ const PublicFinderClient: React.FC = () => {
     );
 };
 
-export default PublicFinderClient;
+
+export default () => (
+    <React.Suspense fallback={
+        <div className="container mx-auto p-4 md:p-8 space-y-8">
+            <div>
+                <Skeleton className="h-9 w-1/3 mb-2" />
+                <Skeleton className="h-4 w-1/2" />
+            </div>
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                <div className="lg:col-span-1">
+                    <Skeleton className="h-[450px] w-full" />
+                </div>
+                <div className="lg:col-span-2">
+                    <Skeleton className="h-[400px] w-full" />
+                </div>
+            </div>
+        </div>
+    }>
+        <PublicFinderClient />
+    </React.Suspense>
+);
+
+    

@@ -11,7 +11,7 @@
 
 import { ai } from '@/ai/genkit';
 import { z } from 'genkit';
-import fs from 'fs/promises';
+import { getScanKeywords } from '@/lib/keyword-service';
 
 // This function simulates fetching content from a URL.
 // In a real-world application, you would replace this with actual
@@ -70,15 +70,7 @@ const analyzeWebTextFlow = ai.defineFlow(
         contentToAnalyze = input.text;
     }
 
-    // Read keywords from keyword.txt
-    let keywords: { word: string; weight: number; category: string; }[] = [];
-    try {
-        const keywordFileContent = await fs.readFile('keyword.txt', 'utf-8');
-        keywords = keywordFileContent.split('\n').filter(line => line.trim() !== '').map(word => ({ word: word.trim(), weight: 5, category: 'Custom' }));
-    } catch (error) {
-        console.error("Error reading keyword.txt:", error);
-        // Continue with an empty keyword list if file reading fails
-    }
+    const keywords = await getScanKeywords();
     const lowerCaseContent = contentToAnalyze.toLowerCase();
 
     let totalScore = 0;
@@ -113,3 +105,5 @@ const analyzeWebTextFlow = ai.defineFlow(
     };
   }
 );
+
+    
