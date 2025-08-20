@@ -24,6 +24,7 @@ import {
   Bot,
   LifeBuoy,
   Briefcase,
+  Search,
 } from 'lucide-react';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 
@@ -36,6 +37,7 @@ export default function MainLayout({ children }: { children: React.ReactNode }) 
     { href: '/alerts', icon: <AlertTriangle />, label: 'Alerts' },
     { href: '/reports', icon: <FileText />, label: 'Reports' },
     { href: '/analytics', icon: <BarChart3 />, label: 'Analytics' },
+    { href: '/public-finder', icon: <Search />, label: 'Public Finder' },
     { href: '/chatbot', icon: <Bot />, label: 'Chatbot' },
     { href: '/awareness', icon: <LifeBuoy />, label: 'Awareness' },
     { href: '/case-management', icon: <Briefcase />, label: 'Case Management' },
@@ -88,7 +90,7 @@ export default function MainLayout({ children }: { children: React.ReactNode }) 
           <header className="sticky top-0 z-10 flex items-center h-14 px-4 border-b bg-background/80 backdrop-blur-sm">
             <SidebarTrigger className="md:hidden" />
             <div className="flex-1">
-              <h2 className="text-lg font-semibold capitalize">{pageTitle}</h2>
+              <h2 className="text-lg font-semibold capitalize">{pageTitle === '' ? 'dashboard' : pageTitle}</h2>
             </div>
           </header>
           {children}
