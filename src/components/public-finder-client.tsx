@@ -171,8 +171,8 @@ const PublicFinderClient: React.FC = () => {
                                <h4 className="font-semibold mb-2 text-muted-foreground">Detected Keywords ({latestResult.totalOccurrences})</h4>
                                {latestResult.detectedKeywords.length > 0 ? (
                                  <div className="flex flex-wrap gap-2">
-                                     {latestResult.detectedKeywords.map(kw => (
-                                         <Badge key={kw.word} variant="outline">
+                                     {latestResult.detectedKeywords.map((kw, index) => (
+                                         <Badge key={`${kw.word}-${index}`} variant="outline">
                                              {kw.word} ({kw.count})
                                          </Badge>
                                      ))}
