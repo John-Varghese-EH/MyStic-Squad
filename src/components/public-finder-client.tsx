@@ -31,8 +31,8 @@ type ScanResult = {
 };
 
 const getRiskLevel = (count: number): KeywordRiskLevel => {
-  if (count > 100) return 'High Risk';
-  if (count > 50) return 'Risk';
+  if (count > 50) return 'High Risk';
+  if (count >= 10) return 'Risk';
   return 'Normal';
 };
 
@@ -91,34 +91,37 @@ const PublicFinderClient: React.FC = () => {
         }
         setIsAnalyzing(true);
 
-        const lowerCaseText = textToAnalyze.toLowerCase();
-        let totalOccurrences = 0;
-
-        const detectedKeywords: DetectedKeyword[] = keywords.map(kw => {
-            const regex = new RegExp(`\\b${kw}\\b`, 'g');
-            const count = (lowerCaseText.match(regex) || []).length;
-            totalOccurrences += count;
-            return {
-                word: kw,
-                count,
-                risk: getRiskLevel(count),
+        // Simulate analysis delay
+        setTimeout(() => {
+            const lowerCaseText = textToAnalyze.toLowerCase();
+            let totalOccurrences = 0;
+    
+            const detectedKeywords: DetectedKeyword[] = keywords.map(kw => {
+                const regex = new RegExp(`\\b${kw.replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&')}\\b`, 'g');
+                const count = (lowerCaseText.match(regex) || []).length;
+                totalOccurrences += count;
+                return {
+                    word: kw,
+                    count,
+                    risk: getRiskLevel(count),
+                };
+            }).filter(kw => kw.count > 0);
+    
+            const avgOccurrences = detectedKeywords.length > 0 ? totalOccurrences / detectedKeywords.length : 0;
+            const overallRisk = getRiskLevel(avgOccurrences);
+    
+            const newResult: ScanResult = {
+                id: new Date().toISOString(),
+                sourceText: textToAnalyze,
+                detectedKeywords,
+                overallRisk,
+                totalOccurrences,
+                timestamp: new Date().toLocaleString(),
             };
-        }).filter(kw => kw.count > 0);
-
-        const avgOccurrences = detectedKeywords.length > 0 ? totalOccurrences / detectedKeywords.length : 0;
-        const overallRisk = getRiskLevel(avgOccurrences);
-
-        const newResult: ScanResult = {
-            id: new Date().toISOString(),
-            sourceText: textToAnalyze,
-            detectedKeywords,
-            overallRisk,
-            totalOccurrences,
-            timestamp: new Date().toLocaleString(),
-        };
-
-        setLatestResult(newResult);
-        setIsAnalyzing(false);
+    
+            setLatestResult(newResult);
+            setIsAnalyzing(false);
+        }, 500);
     };
 
     return (
@@ -160,7 +163,7 @@ const PublicFinderClient: React.FC = () => {
                            <Button onClick={handleAddKeyword}>Add</Button>
                         </div>
                         <div className="space-y-2">
-                            <Label>Saved Keywords</Label>
+                            <Label>Saved Keywords ({keywords.length})</Label>
                              {keywords.length > 0 ? (
                                 <div className="max-h-40 overflow-y-auto pr-2 flex flex-wrap gap-2">
                                     {keywords.map(kw => (
@@ -221,8 +224,9 @@ const PublicFinderClient: React.FC = () => {
                                 
                                 <div>
                                 <h4 className="font-semibold mb-2">Detected Keyword Breakdown</h4>
+                                <div className="max-h-96 overflow-y-auto">
                                 <Table>
-                                    <TableHeader>
+                                    <TableHeader className="sticky top-0 bg-muted/80 backdrop-blur-sm">
                                         <TableRow>
                                             <TableHead>Keyword</TableHead>
                                             <TableHead className="text-center">Frequency</TableHead>
@@ -248,6 +252,7 @@ const PublicFinderClient: React.FC = () => {
                                     </TableBody>
                                 </Table>
                                 </div>
+                                </div>
 
                             </div>
                         ) : (
@@ -271,11 +276,13 @@ export default () => (
                 <Skeleton className="h-4 w-1/2" />
             </div>
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-                <div className="lg:col-span-1">
-                    <Skeleton className="h-[450px] w-full" />
+                <div className="lg:col-span-1 space-y-6">
+                    <Skeleton className="h-[250px] w-full" />
+                    <Skeleton className="h-[250px] w-full" />
+                    <Skeleton className="h-12 w-full" />
                 </div>
                 <div className="lg:col-span-2">
-                    <Skeleton className="h-[400px] w-full" />
+                    <Skeleton className="h-[500px] w-full" />
                 </div>
             </div>
         </div>
@@ -283,5 +290,3 @@ export default () => (
         <PublicFinderClient />
     </React.Suspense>
 );
-
-    
