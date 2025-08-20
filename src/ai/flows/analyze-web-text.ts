@@ -11,16 +11,18 @@
 
 import { ai } from '@/ai/genkit';
 import { z } from 'genkit';
-import { getScanKeywords } from '@/lib/keyword-service';
+import fs from 'fs/promises';
 
 // This function simulates fetching content from a URL.
-// In a real implementation, this would use a library like node-fetch or axios.
-// For security reasons in this environment, we'll just return the URL itself as text.
+// In a real-world application, you would replace this with actual
+// web scraping or content fetching logic using a library like `node-fetch`
+// or `axios`, potentially with safeguards against malicious sites or
+// excessive resource usage. Ensure compliance with robots.txt and terms of service.
 async function fetchUrlContent(url: string): Promise<string> {
-    // In a real scenario, you'd fetch the URL:
+    // --- REAL IMPLEMENTATION GOES HERE ---
     // const response = await fetch(`https://api.allorigins.win/get?url=${encodeURIComponent(url)}`);
     // const data = await response.json();
-    // const text = data.contents.replace(/<[^>]*>/g, ''); // Basic tag stripping
+    // const text = data.contents.replace(/<[^>]*>/g, ''); // Basic tag stripping (consider a more robust HTML parser)
     // return text;
     console.log(`Simulating fetch for: ${url}`);
     return `This is simulated text content from the URL: ${url}. It mentions various keywords for testing purposes like payment, transfer, and crypto.`;
@@ -68,7 +70,15 @@ const analyzeWebTextFlow = ai.defineFlow(
         contentToAnalyze = input.text;
     }
 
-    const keywords = await getScanKeywords();
+    // Read keywords from keyword.txt
+    let customKeywords: { word: string; weight: number; category: string; }[] = [];
+    try {
+        const keywordFileContent = await fs.readFile('keyword.txt', 'utf-8');
+        customKeywords = keywordFileContent.split('\\n').filter(line => line.trim() !== '').map(word => ({ word: word.trim(), weight: 5, category: 'Custom' }));
+    } catch (error) {
+        console.error("Error reading keyword.txt:", error);
+        // Continue with an empty keyword list if file reading fails
+    }
     const lowerCaseContent = contentToAnalyze.toLowerCase();
 
     let totalScore = 0;
@@ -76,7 +86,7 @@ const analyzeWebTextFlow = ai.defineFlow(
 
     const detectedKeywords = keywords
         .map(keyword => {
-            // Use a regex to count whole word occurrences
+            // Use a regex to count whole word occurrences for custom keywords
             const regex = new RegExp(`\\b${keyword.word.toLowerCase()}\\b`, 'g');
             const matches = lowerCaseContent.match(regex);
             const count = matches ? matches.length : 0;
