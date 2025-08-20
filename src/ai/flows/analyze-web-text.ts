@@ -71,10 +71,10 @@ const analyzeWebTextFlow = ai.defineFlow(
     }
 
     // Read keywords from keyword.txt
-    let customKeywords: { word: string; weight: number; category: string; }[] = [];
+    let keywords: { word: string; weight: number; category: string; }[] = [];
     try {
         const keywordFileContent = await fs.readFile('keyword.txt', 'utf-8');
-        customKeywords = keywordFileContent.split('\\n').filter(line => line.trim() !== '').map(word => ({ word: word.trim(), weight: 5, category: 'Custom' }));
+        keywords = keywordFileContent.split('\n').filter(line => line.trim() !== '').map(word => ({ word: word.trim(), weight: 5, category: 'Custom' }));
     } catch (error) {
         console.error("Error reading keyword.txt:", error);
         // Continue with an empty keyword list if file reading fails
