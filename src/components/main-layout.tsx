@@ -145,13 +145,13 @@ export default function MainLayout({ children }: { children: React.ReactNode }) 
           </SidebarFooter>
         </Sidebar>
         <SidebarInset>
+          <PocDisclaimer />
           <header className="sticky top-0 z-10 flex items-center h-14 px-4 border-b bg-background/80 backdrop-blur-sm">
             <SidebarTrigger className="md:hidden" />
             <div className="flex-1">
               <h2 className="text-lg font-semibold capitalize">{pageTitle === '' ? 'dashboard' : pageTitle}</h2>
             </div>
           </header>
-          <PocDisclaimer />
           {children}
         </SidebarInset>
       </div>
