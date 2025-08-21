@@ -12,6 +12,8 @@ import { useToast } from '@/hooks/use-toast';
 import { getKeywordsFromFile } from '@/ai/flows/extract-keywords';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 
 const EncryptionDemoPage: React.FC = () => {
   const [plaintext, setPlaintext] = useState('');
@@ -19,6 +21,8 @@ const EncryptionDemoPage: React.FC = () => {
   const [key, setKey] = useState('secretkey');
   const [detectedKeywords, setDetectedKeywords] = useState<string[]>([]);
   const [keywords, setKeywords] = useState<string[]>([]);
+  const [selectedKeyword, setSelectedKeyword] = useState<string>('');
+  const [isKeywordInPlaintext, setIsKeywordInPlaintext] = useState(false);
   const { toast } = useToast();
 
   useEffect(() => {
@@ -29,9 +33,20 @@ const EncryptionDemoPage: React.FC = () => {
         .map(line => line.trim())
         .filter(line => line !== '');
       setKeywords(keywords);
+      if (keywords.length > 0) {
+        setSelectedKeyword(keywords[0]);
+      }
     };
     fetchKeywords();
   }, []);
+
+  useEffect(() => {
+    if (selectedKeyword && plaintext) {
+      setIsKeywordInPlaintext(plaintext.toLowerCase().includes(selectedKeyword.toLowerCase()));
+    } else {
+      setIsKeywordInPlaintext(false);
+    }
+  }, [plaintext, selectedKeyword]);
 
   // A simple XOR cipher for demonstration purposes.
   // In a real application, use a robust cryptographic library like CryptoJS or the Web Crypto API.
@@ -111,6 +126,19 @@ const EncryptionDemoPage: React.FC = () => {
               placeholder="Enter your secret key..."
             />
           </div>
+           <div className="space-y-2">
+            <Label htmlFor="keyword-select">Select Keyword to Monitor</Label>
+              <Select value={selectedKeyword} onValueChange={setSelectedKeyword}>
+                <SelectTrigger id="keyword-select">
+                    <SelectValue placeholder="Select a keyword" />
+                </SelectTrigger>
+                <SelectContent>
+                    {keywords.map(kw => (
+                        <SelectItem key={kw} value={kw}>{kw}</SelectItem>
+                    ))}
+                </SelectContent>
+            </Select>
+          </div>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6 items-start">
             <div className="space-y-2">
               <Label htmlFor="plaintext">Plaintext</Label>
@@ -142,6 +170,16 @@ const EncryptionDemoPage: React.FC = () => {
               <Unlock className="mr-2" /> Decrypt
             </Button>
           </div>
+          
+          {isKeywordInPlaintext && (
+            <Alert variant="destructive" className="mt-4">
+              <AlertTriangle className="h-4 w-4" />
+              <AlertTitle>Flagged Keyword Detected!</AlertTitle>
+              <AlertDescription>
+                The selected keyword <Badge variant="outline" className="mx-1">{selectedKeyword}</Badge> was found in the plaintext. This phrase is considered high risk.
+              </AlertDescription>
+            </Alert>
+          )}
           
           {detectedKeywords.length > 0 && (
             <>
