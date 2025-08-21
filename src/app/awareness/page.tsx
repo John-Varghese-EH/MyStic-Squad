@@ -20,6 +20,8 @@ import {
   Newspaper,
   Siren,
   Brain,
+  CircleHelp,
+  CheckSquare,
 } from 'lucide-react';
 
 const AwarenessPage: React.FC = () => {
@@ -54,6 +56,15 @@ const AwarenessPage: React.FC = () => {
         'Easy Availability – Drugs are sometimes easily accessible around hostels, parties, or certain social circles.',
       ],
     },
+     {
+      icon: <CheckSquare className="text-green-500" />,
+      title: 'What You Should Do',
+      content: [
+        'Say “No” firmly the very first time and walk away.',
+        'Talk to a trusted teacher, parent, or counselor if someone keeps pushing you.',
+        'If the situation feels dangerous, report immediately to school authorities or local helplines/police.',
+      ],
+    },
     {
       icon: <ShieldCheck className="text-green-500" />,
       title: 'How to Prevent Drug Use',
@@ -74,6 +85,8 @@ const AwarenessPage: React.FC = () => {
         'Glorifying Drugs – They claim drugs reduce stress, boost confidence, or make parties more fun.',
         'Small Favors First – They may give you free samples or ask you to “just carry this packet” so you get used to it.',
         'Isolation Tactics – They try to separate you from other friends, saying “Only we are your true friends.”',
+        'Suspicious Gifts or Money - Offering free things, paying for your expenses, or giving money without reason.',
+        'Avoiding Authorities - They don’t want parents, teachers, or responsible adults to know about their activities.',
       ],
     },
     {
@@ -96,6 +109,8 @@ const AwarenessPage: React.FC = () => {
         'Heavy Fines: Courts impose huge monetary fines.',
         'Permanent Criminal Record: A conviction makes it difficult to get jobs, visas, or higher education.',
         'Loss of Freedom & Rights: You may lose your right to vote, travel, or hold certain positions.',
+        'Police Surveillance: Even if you are suspected, your movements and phone can be monitored.',
+        'Impact on Family: Legal cases bring shame, stress, and financial burden to your family.',
       ],
 
     },
@@ -107,7 +122,10 @@ const AwarenessPage: React.FC = () => {
         'Addiction: The body and mind become dependent, making it very difficult to stop.',
         'Heart and Lung Problems ❤️‍🔥: Can cause heart attacks, strokes, and breathing issues.',
         'Liver and Kidney Damage: Continuous use can lead to organ failure.',
+        'Weakened Immune System: The body becomes less able to fight infections.',
         'Risk of Overdose: Taking too much can cause unconsciousness, coma, or even death.',
+        'Spread of Diseases: Sharing needles increases the risk of HIV/AIDS and hepatitis.',
+        'Mental Health Issues: Increases chances of depression, anxiety, and suicidal thoughts.',
       ],
     },
     {
@@ -119,6 +137,7 @@ const AwarenessPage: React.FC = () => {
         'Scams & Fraud: Many online dealers are fake and will cheat or blackmail you.',
         'Hacking & Identity Theft: Shady websites can expose your personal data to hackers.',
         'Digital Blackmail: Dealers or buyers can use screenshots of chats to threaten you.',
+        'Banking & Crypto Risks: Transactions are traceable and accounts may be frozen.',
       ],
     },
     {
@@ -129,6 +148,7 @@ const AwarenessPage: React.FC = () => {
         'Social Media 🌐: They check your profiles to know your location and habits.',
         'GPS / Location Sharing 📍: They can track where you hang out.',
         'Friends & Peer Circles 👥: They ask common friends about you.',
+        'Debt Trapping: If you take drugs on credit, they use it as leverage.',
         'Digital Transactions 💻: Your payment history can be used to identify or pressure you.',
       ],
     },
@@ -152,6 +172,8 @@ const AwarenessPage: React.FC = () => {
         'Meditation & Yoga 🧘‍♀️: Calms the mind and reduces anxiety.',
         'Hobbies & Creativity ✍️📚: Gives a sense of achievement without harm.',
         'Positive Social Circles 👥: Good company removes the need for drugs as “stress relief.”',
+        'Adventure & Travel: Hiking, cycling, or exploring new places provides a healthy thrill.',
+        'Therapy & Counseling: Talking to a professional is a safe way to heal from emotional stress.',
       ],
     },
   ];
@@ -186,6 +208,7 @@ const AwarenessPage: React.FC = () => {
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2"><Phone className="text-primary" /> Helpline Numbers</CardTitle>
+          <CardDescription>Confidential support is just a call away. Don't hesitate to reach out.</CardDescription>
         </CardHeader>
         <CardContent>
           <div className="overflow-x-auto">
