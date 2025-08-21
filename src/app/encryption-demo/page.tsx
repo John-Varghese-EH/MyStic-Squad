@@ -6,22 +6,37 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
+import { Input } from '@/components/ui/input';
 import { ArrowRightLeft, Lock, Unlock } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 
 const EncryptionDemoPage: React.FC = () => {
   const [plaintext, setPlaintext] = useState('');
   const [ciphertext, setCiphertext] = useState('');
+  const [key, setKey] = useState('secretkey');
   const { toast } = useToast();
 
-  // Basic Base64 encoding/decoding to simulate encryption
+  // A simple XOR cipher for demonstration purposes.
+  // In a real application, use a robust cryptographic library like CryptoJS or the Web Crypto API.
+  const simpleCipher = (text: string, cipherKey: string): string => {
+    let result = '';
+    for (let i = 0; i < text.length; i++) {
+      result += String.fromCharCode(text.charCodeAt(i) ^ cipherKey.charCodeAt(i % cipherKey.length));
+    }
+    return result;
+  };
+
   const handleEncrypt = () => {
     if (!plaintext) {
       toast({ variant: 'destructive', title: 'Error', description: 'Plaintext cannot be empty.' });
       return;
     }
+     if (!key) {
+      toast({ variant: 'destructive', title: 'Error', description: 'Encryption key cannot be empty.' });
+      return;
+    }
     try {
-      const encrypted = btoa(plaintext); // In a real app, use a strong crypto library
+      const encrypted = btoa(simpleCipher(plaintext, key));
       setCiphertext(encrypted);
       toast({ title: 'Success', description: 'Message encrypted.' });
     } catch (error) {
@@ -34,12 +49,16 @@ const EncryptionDemoPage: React.FC = () => {
       toast({ variant: 'destructive', title: 'Error', description: 'Ciphertext cannot be empty.' });
       return;
     }
+     if (!key) {
+      toast({ variant: 'destructive', title: 'Error', description: 'Encryption key cannot be empty.' });
+      return;
+    }
     try {
-      const decrypted = atob(ciphertext); // In a real app, use a strong crypto library
+      const decrypted = simpleCipher(atob(ciphertext), key);
       setPlaintext(decrypted);
       toast({ title: 'Success', description: 'Message decrypted.' });
     } catch (error) {
-      toast({ variant: 'destructive', title: 'Error', description: 'Failed to decrypt. The text may not be valid ciphertext.' });
+      toast({ variant: 'destructive', title: 'Error', description: 'Failed to decrypt. The text may not be valid ciphertext or the key may be wrong.' });
     }
   };
 
@@ -47,16 +66,25 @@ const EncryptionDemoPage: React.FC = () => {
     <div className="container mx-auto p-4 md:p-8 space-y-6">
       <div>
         <h1 className="text-3xl font-bold">Encryption & Decryption Demo</h1>
-        <p className="text-muted-foreground">See how text is transformed. This is a simplified demo using Base64.</p>
+        <p className="text-muted-foreground">See how text and a key are used to transform data.</p>
       </div>
       <Card>
         <CardHeader>
           <CardTitle>Demonstration Tool</CardTitle>
           <CardDescription>
-            Enter text into either box and use the buttons to see the transformation.
+            Enter text, provide a key, and use the buttons to see the transformation.
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
+          <div className="space-y-2">
+            <Label htmlFor="key">Encryption Key</Label>
+            <Input 
+              id="key"
+              value={key}
+              onChange={(e) => setKey(e.target.value)}
+              placeholder="Enter your secret key..."
+            />
+          </div>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6 items-end">
             <div className="space-y-2">
               <Label htmlFor="plaintext">Plaintext</Label>
@@ -95,10 +123,10 @@ const EncryptionDemoPage: React.FC = () => {
             <CardTitle className="text-yellow-400 flex items-center gap-2">
                 <Lock size={20} /> Important Disclaimer
             </CardTitle>
-          </CardHeader>
+          </Header>
           <CardContent className="text-yellow-400/80">
             <p>
-              This tool uses simple Base64 encoding for demonstration purposes only. It is **not** a secure encryption method and should not be used for protecting sensitive data. Real-world applications should use industry-standard, robust encryption algorithms and protocols.
+              This tool uses a simple XOR cipher with Base64 encoding for demonstration purposes only. It is **not** a secure encryption method and should not be used for protecting sensitive data. Real-world applications should use industry-standard, robust encryption algorithms and protocols.
             </p>
           </CardContent>
         </Card>
