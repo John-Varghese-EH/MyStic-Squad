@@ -41,6 +41,7 @@ const EncryptionDemoPage: React.FC = () => {
   // A simple XOR cipher for demonstration purposes.
   // In a real application, use a robust cryptographic library like CryptoJS or the Web Crypto API.
   const simpleCipher = (text: string, cipherKey: string): string => {
+    if (!cipherKey) return text;
     let result = '';
     for (let i = 0; i < text.length; i++) {
       result += String.fromCharCode(text.charCodeAt(i) ^ cipherKey.charCodeAt(i % cipherKey.length));
@@ -193,7 +194,7 @@ const EncryptionDemoPage: React.FC = () => {
           <CardHeader>
             <CardTitle className="text-yellow-400 flex items-center gap-2">
                 <Lock size={20} /> Important Disclaimer
-            </Title>
+            </CardTitle>
           </CardHeader>
           <CardContent className="text-yellow-400/80">
             <p>
