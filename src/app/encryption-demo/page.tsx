@@ -13,14 +13,13 @@ import { getScanKeywords } from '@/lib/keyword-service';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 
 const EncryptionDemoPage: React.FC = () => {
   const [plaintext, setPlaintext] = useState('');
   const [ciphertext, setCiphertext] = useState('');
   const [key, setKey] = useState('secretkey');
   const [availableKeywords, setAvailableKeywords] = useState<string[]>([]);
-  const [selectedKeyword, setSelectedKeyword] = useState<string>('');
+  const [customKeyword, setCustomKeyword] = useState<string>('payment');
   const [detectedKeywords, setDetectedKeywords] = useState<string[]>([]);
 
   const { toast } = useToast();
@@ -31,9 +30,6 @@ const EncryptionDemoPage: React.FC = () => {
         const keywords = await getScanKeywords();
         const keywordStrings = keywords.map(kw => kw.word);
         setAvailableKeywords(keywordStrings);
-        if (keywordStrings.length > 0) {
-          setSelectedKeyword(keywordStrings[0]);
-        }
       } catch (error) {
         toast({ variant: 'destructive', title: 'Error', description: 'Could not load keywords.' });
       }
@@ -97,7 +93,7 @@ const EncryptionDemoPage: React.FC = () => {
     }
   };
 
-  const isSelectedKeywordInPlaintext = selectedKeyword && plaintext.toLowerCase().includes(selectedKeyword.toLowerCase());
+  const isCustomKeywordInPlaintext = customKeyword && plaintext.toLowerCase().includes(customKeyword.toLowerCase());
 
   return (
     <div className="container mx-auto p-4 md:p-8 space-y-6">
@@ -124,26 +120,22 @@ const EncryptionDemoPage: React.FC = () => {
               />
             </div>
              <div className="space-y-2">
-              <Label htmlFor="keyword-select">Keyword to Monitor</Label>
-              <Select value={selectedKeyword} onValueChange={setSelectedKeyword}>
-                <SelectTrigger id="keyword-select">
-                  <SelectValue placeholder="Select a keyword..." />
-                </SelectTrigger>
-                <SelectContent>
-                  {availableKeywords.map(kw => (
-                    <SelectItem key={kw} value={kw}>{kw}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+              <Label htmlFor="custom-keyword">Custom Keyword to Monitor</Label>
+              <Input 
+                id="custom-keyword"
+                value={customKeyword}
+                onChange={(e) => setCustomKeyword(e.target.value)}
+                placeholder="Enter a keyword..."
+              />
             </div>
           </div>
           
-          {isSelectedKeywordInPlaintext && (
+          {isCustomKeywordInPlaintext && (
             <Alert variant="destructive">
               <AlertTriangle className="h-4 w-4" />
               <AlertTitle>High-Risk Phrase Detected!</AlertTitle>
               <AlertDescription>
-                The keyword `'{selectedKeyword}'` was found in the message.
+                The keyword `'{customKeyword}'` was found in the message.
               </AlertDescription>
             </Alert>
           )}
@@ -201,7 +193,7 @@ const EncryptionDemoPage: React.FC = () => {
           <CardHeader>
             <CardTitle className="text-yellow-400 flex items-center gap-2">
                 <Lock size={20} /> Important Disclaimer
-            </CardTitle>
+            </Title>
           </CardHeader>
           <CardContent className="text-yellow-400/80">
             <p>
