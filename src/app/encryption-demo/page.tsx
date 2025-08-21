@@ -9,7 +9,7 @@ import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
 import { ArrowRightLeft, Lock, Unlock, AlertTriangle } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
-import { getScanKeywords } from '@/lib/keyword-service';
+import { getKeywordsFromFile } from '@/ai/flows/extract-keywords';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
 
@@ -23,8 +23,12 @@ const EncryptionDemoPage: React.FC = () => {
 
   useEffect(() => {
     const fetchKeywords = async () => {
-      const scanKeywords = await getScanKeywords();
-      setKeywords(scanKeywords.map(kw => kw.word));
+      const keywordFileContent = await getKeywordsFromFile();
+      const keywords = keywordFileContent
+        .split('\n')
+        .map(line => line.trim())
+        .filter(line => line !== '');
+      setKeywords(keywords);
     };
     fetchKeywords();
   }, []);
@@ -143,7 +147,9 @@ const EncryptionDemoPage: React.FC = () => {
             <>
                 <Separator className="my-4"/>
                 <div className="space-y-2">
-                    <h3 className="text-lg font-semibold flex items-center gap-2 text-destructive"><AlertTriangle/> Detected Keywords</h3>
+                    <h3 className="text-lg font-semibold flex items-center gap-2 text-destructive">
+                      <AlertTriangle/> Detected Keywords ({detectedKeywords.length})
+                    </h3>
                     <p className="text-sm text-muted-foreground">The following suspicious keywords were found in the decrypted message.</p>
                     <div className="flex flex-wrap gap-2 pt-2">
                         {detectedKeywords.map((kw, index) => <Badge variant="destructive" key={index}>{kw}</Badge>)}
