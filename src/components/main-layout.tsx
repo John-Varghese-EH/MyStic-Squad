@@ -26,6 +26,7 @@ import {
   LifeBuoy,
   Briefcase,
   Search,
+  KeyRound,
 } from 'lucide-react';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { useProfile } from '@/hooks/use-profile';
@@ -71,7 +72,7 @@ const CustomLogo = () => (
 export default function MainLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const { profile, isLoading } = useProfile();
-  const pageTitle = (pathname.split('/').pop() || 'dashboard').replace('-', ' ');
+  const pageTitle = (pathname.split('/').pop() || 'dashboard').replace(/-/g, ' ');
 
   const menuItems = [
     { href: '/', label: 'Dashboard', icon: <LayoutDashboard />, exact: true },
@@ -79,6 +80,7 @@ export default function MainLayout({ children }: { children: React.ReactNode }) 
     { href: '/reports', label: 'Reports', icon: <FileText /> },
     { href: '/analytics', label: 'Analytics', icon: <BarChart3 /> },
     { href: '/public-finder', label: 'Public Finder', icon: <Search /> },
+    { href: '/encryption-demo', label: 'Encryption Demo', icon: <KeyRound /> },
     { href: '/chatbot', label: 'Chatbot', icon: <Bot /> },
     { href: '/awareness', label: 'Awareness', icon: <LifeBuoy /> },
     { href: '/case-management', label: 'Case Management', icon: <Briefcase /> },
