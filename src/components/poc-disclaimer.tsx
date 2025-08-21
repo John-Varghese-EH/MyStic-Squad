@@ -17,6 +17,7 @@ const PocDisclaimer: React.FC = () => {
   const [isOpen, setIsOpen] = useState(false);
 
   useEffect(() => {
+    // This code now runs only on the client, after the initial render.
     const hasSeenDisclaimer = sessionStorage.getItem('hasSeenPocDisclaimer');
     if (!hasSeenDisclaimer) {
       setIsOpen(true);
