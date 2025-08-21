@@ -123,7 +123,7 @@ const EncryptionDemoPage: React.FC = () => {
             <CardTitle className="text-yellow-400 flex items-center gap-2">
                 <Lock size={20} /> Important Disclaimer
             </CardTitle>
-          </Header>
+          </CardHeader>
           <CardContent className="text-yellow-400/80">
             <p>
               This tool uses a simple XOR cipher with Base64 encoding for demonstration purposes only. It is **not** a secure encryption method and should not be used for protecting sensitive data. Real-world applications should use industry-standard, robust encryption algorithms and protocols.
