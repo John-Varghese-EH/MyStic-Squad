@@ -1,7 +1,7 @@
 
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Textarea } from '@/components/ui/textarea';
@@ -9,7 +9,7 @@ import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
 import { ArrowRightLeft, Lock, Unlock, AlertTriangle } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
-import { getScanKeywords, type ScanKeyword } from '@/lib/keyword-service';
+import { getScanKeywords } from '@/lib/keyword-service';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
 
@@ -18,7 +18,16 @@ const EncryptionDemoPage: React.FC = () => {
   const [ciphertext, setCiphertext] = useState('');
   const [key, setKey] = useState('secretkey');
   const [detectedKeywords, setDetectedKeywords] = useState<string[]>([]);
+  const [keywords, setKeywords] = useState<string[]>([]);
   const { toast } = useToast();
+
+  useEffect(() => {
+    const fetchKeywords = async () => {
+      const scanKeywords = await getScanKeywords();
+      setKeywords(scanKeywords.map(kw => kw.word));
+    };
+    fetchKeywords();
+  }, []);
 
   // A simple XOR cipher for demonstration purposes.
   // In a real application, use a robust cryptographic library like CryptoJS or the Web Crypto API.
@@ -63,11 +72,8 @@ const EncryptionDemoPage: React.FC = () => {
       setPlaintext(decrypted);
       
       // Keyword detection
-      const keywordsToScan = await getScanKeywords();
       const lowerDecrypted = decrypted.toLowerCase();
-      const foundKeywords = keywordsToScan
-        .map(kw => kw.word.toLowerCase())
-        .filter(kw => lowerDecrypted.includes(kw));
+      const foundKeywords = keywords.filter(kw => lowerDecrypted.includes(kw.toLowerCase()));
       
       setDetectedKeywords(foundKeywords);
 

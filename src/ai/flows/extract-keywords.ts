@@ -1,6 +1,8 @@
 
 'use server';
 
+import fs from 'fs/promises';
+
 /**
  * @fileOverview A Genkit flow for extracting keywords from text using AI.
  *
@@ -11,6 +13,10 @@
 
 import { ai } from '@/ai/genkit';
 import { z } from 'genkit';
+
+export async function getKeywordsFromFile(): Promise<string> {
+  return fs.readFile('keyword.txt', 'utf-8');
+}
 
 const ExtractKeywordsInputSchema = z.object({
   textToAnalyze: z.string().describe("The text from which to extract keywords."),
@@ -50,5 +56,3 @@ const extractKeywordsFlow = ai.defineFlow(
     return output!;
   }
 );
-
-    

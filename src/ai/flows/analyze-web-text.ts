@@ -92,9 +92,9 @@ const analyzeWebTextFlow = ai.defineFlow(
     });
 
     let riskLevel: 'low' | 'medium' | 'high' = 'low';
-    if (totalScore >= 20) {
+    if (totalScore >= 100) {
         riskLevel = 'high';
-    } else if (totalScore >= 10) {
+    } else if (totalScore >= 50) {
         riskLevel = 'medium';
     }
 
@@ -105,5 +105,3 @@ const analyzeWebTextFlow = ai.defineFlow(
     };
   }
 );
-
-    
