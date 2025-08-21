@@ -7,13 +7,17 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
-import { ArrowRightLeft, Lock, Unlock } from 'lucide-react';
+import { ArrowRightLeft, Lock, Unlock, AlertTriangle } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
+import { getScanKeywords, type ScanKeyword } from '@/lib/keyword-service';
+import { Badge } from '@/components/ui/badge';
+import { Separator } from '@/components/ui/separator';
 
 const EncryptionDemoPage: React.FC = () => {
   const [plaintext, setPlaintext] = useState('');
   const [ciphertext, setCiphertext] = useState('');
   const [key, setKey] = useState('secretkey');
+  const [detectedKeywords, setDetectedKeywords] = useState<string[]>([]);
   const { toast } = useToast();
 
   // A simple XOR cipher for demonstration purposes.
@@ -38,13 +42,14 @@ const EncryptionDemoPage: React.FC = () => {
     try {
       const encrypted = btoa(simpleCipher(plaintext, key));
       setCiphertext(encrypted);
+      setDetectedKeywords([]); // Clear keywords on new encryption
       toast({ title: 'Success', description: 'Message encrypted.' });
     } catch (error) {
       toast({ variant: 'destructive', title: 'Error', description: 'Failed to encrypt message.' });
     }
   };
 
-  const handleDecrypt = () => {
+  const handleDecrypt = async () => {
     if (!ciphertext) {
       toast({ variant: 'destructive', title: 'Error', description: 'Ciphertext cannot be empty.' });
       return;
@@ -56,8 +61,19 @@ const EncryptionDemoPage: React.FC = () => {
     try {
       const decrypted = simpleCipher(atob(ciphertext), key);
       setPlaintext(decrypted);
-      toast({ title: 'Success', description: 'Message decrypted.' });
+      
+      // Keyword detection
+      const keywordsToScan = await getScanKeywords();
+      const lowerDecrypted = decrypted.toLowerCase();
+      const foundKeywords = keywordsToScan
+        .map(kw => kw.word.toLowerCase())
+        .filter(kw => lowerDecrypted.includes(kw));
+      
+      setDetectedKeywords(foundKeywords);
+
+      toast({ title: 'Success', description: 'Message decrypted and scanned for keywords.' });
     } catch (error) {
+      setDetectedKeywords([]);
       toast({ variant: 'destructive', title: 'Error', description: 'Failed to decrypt. The text may not be valid ciphertext or the key may be wrong.' });
     }
   };
@@ -85,12 +101,12 @@ const EncryptionDemoPage: React.FC = () => {
               placeholder="Enter your secret key..."
             />
           </div>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 items-end">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 items-start">
             <div className="space-y-2">
               <Label htmlFor="plaintext">Plaintext</Label>
               <Textarea
                 id="plaintext"
-                placeholder="Enter your message here..."
+                placeholder="Enter your message here... try using words like 'payment', 'delivery', or 'crypto'."
                 rows={8}
                 value={plaintext}
                 onChange={(e) => setPlaintext(e.target.value)}
@@ -116,6 +132,20 @@ const EncryptionDemoPage: React.FC = () => {
               <Unlock className="mr-2" /> Decrypt
             </Button>
           </div>
+          
+          {detectedKeywords.length > 0 && (
+            <>
+                <Separator className="my-4"/>
+                <div className="space-y-2">
+                    <h3 className="text-lg font-semibold flex items-center gap-2 text-destructive"><AlertTriangle/> Detected Keywords</h3>
+                    <p className="text-sm text-muted-foreground">The following suspicious keywords were found in the decrypted message.</p>
+                    <div className="flex flex-wrap gap-2 pt-2">
+                        {detectedKeywords.map((kw, index) => <Badge variant="destructive" key={index}>{kw}</Badge>)}
+                    </div>
+                </div>
+            </>
+          )}
+
         </CardContent>
       </Card>
        <Card className="mt-6 border-yellow-400/50 bg-yellow-400/10">
