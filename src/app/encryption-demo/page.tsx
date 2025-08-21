@@ -7,37 +7,39 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
-import { ArrowRightLeft, Lock, Unlock, AlertTriangle, X } from 'lucide-react';
+import { ArrowRightLeft, Lock, Unlock, AlertTriangle } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
-import { getKeywordsFromFile } from '@/ai/flows/extract-keywords';
+import { getScanKeywords } from '@/lib/keyword-service';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 
 const EncryptionDemoPage: React.FC = () => {
   const [plaintext, setPlaintext] = useState('');
   const [ciphertext, setCiphertext] = useState('');
   const [key, setKey] = useState('secretkey');
+  const [availableKeywords, setAvailableKeywords] = useState<string[]>([]);
+  const [selectedKeyword, setSelectedKeyword] = useState<string>('');
   const [detectedKeywords, setDetectedKeywords] = useState<string[]>([]);
-  const [customKeywords, setCustomKeywords] = useState<string[]>(['payment', 'delivery', 'crypto']);
-  const [customKeywordInput, setCustomKeywordInput] = useState('');
 
   const { toast } = useToast();
-
-  const handleAddCustomKeyword = () => {
-    if (customKeywordInput.trim()) {
-      const newKeywords = customKeywordInput
-        .split(',')
-        .map(kw => kw.trim().toLowerCase())
-        .filter(kw => kw && !customKeywords.includes(kw));
-      setCustomKeywords([...customKeywords, ...newKeywords]);
-      setCustomKeywordInput('');
+  
+  useEffect(() => {
+    async function fetchKeywords() {
+      try {
+        const keywords = await getScanKeywords();
+        const keywordStrings = keywords.map(kw => kw.word);
+        setAvailableKeywords(keywordStrings);
+        if (keywordStrings.length > 0) {
+          setSelectedKeyword(keywordStrings[0]);
+        }
+      } catch (error) {
+        toast({ variant: 'destructive', title: 'Error', description: 'Could not load keywords.' });
+      }
     }
-  };
-
-  const handleRemoveCustomKeyword = (keywordToRemove: string) => {
-    setCustomKeywords(customKeywords.filter(kw => kw !== keywordToRemove));
-  };
+    fetchKeywords();
+  }, [toast]);
 
 
   // A simple XOR cipher for demonstration purposes.
@@ -84,7 +86,7 @@ const EncryptionDemoPage: React.FC = () => {
       
       // Keyword detection
       const lowerDecrypted = decrypted.toLowerCase();
-      const foundKeywords = customKeywords.filter(kw => lowerDecrypted.includes(kw.toLowerCase()));
+      const foundKeywords = availableKeywords.filter(kw => lowerDecrypted.includes(kw.toLowerCase()));
       
       setDetectedKeywords(foundKeywords);
 
@@ -94,6 +96,8 @@ const EncryptionDemoPage: React.FC = () => {
       toast({ variant: 'destructive', title: 'Error', description: 'Failed to decrypt. The text may not be valid ciphertext or the key may be wrong.' });
     }
   };
+
+  const isSelectedKeywordInPlaintext = selectedKeyword && plaintext.toLowerCase().includes(selectedKeyword.toLowerCase());
 
   return (
     <div className="container mx-auto p-4 md:p-8 space-y-6">
@@ -109,38 +113,41 @@ const EncryptionDemoPage: React.FC = () => {
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
-          <div className="space-y-2">
-            <Label htmlFor="key">Encryption Key</Label>
-            <Input 
-              id="key"
-              value={key}
-              onChange={(e) => setKey(e.target.value)}
-              placeholder="Enter your secret key..."
-            />
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <Label htmlFor="key">Encryption Key</Label>
+              <Input 
+                id="key"
+                value={key}
+                onChange={(e) => setKey(e.target.value)}
+                placeholder="Enter your secret key..."
+              />
+            </div>
+             <div className="space-y-2">
+              <Label htmlFor="keyword-select">Keyword to Monitor</Label>
+              <Select value={selectedKeyword} onValueChange={setSelectedKeyword}>
+                <SelectTrigger id="keyword-select">
+                  <SelectValue placeholder="Select a keyword..." />
+                </SelectTrigger>
+                <SelectContent>
+                  {availableKeywords.map(kw => (
+                    <SelectItem key={kw} value={kw}>{kw}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
           </div>
-           <div className="space-y-2">
-            <Label htmlFor="custom-keywords">Custom Keywords to Monitor</Label>
-              <div className="flex gap-2">
-                <Input
-                  id="custom-keywords"
-                  placeholder="Add comma-separated keywords"
-                  value={customKeywordInput}
-                  onChange={e => setCustomKeywordInput(e.target.value)}
-                  onKeyDown={e => e.key === 'Enter' && handleAddCustomKeyword()}
-                />
-                <Button onClick={handleAddCustomKeyword}>Add</Button>
-              </div>
-              <div className="flex flex-wrap gap-2 pt-2">
-                {customKeywords.map(kw => (
-                  <Badge key={kw} variant="secondary" className="flex items-center gap-1">
-                    {kw}
-                    <button onClick={() => handleRemoveCustomKeyword(kw)} className="rounded-full hover:bg-muted-foreground/20">
-                       <X className="h-3 w-3" />
-                    </button>
-                  </Badge>
-                ))}
-              </div>
-          </div>
+          
+          {isSelectedKeywordInPlaintext && (
+            <Alert variant="destructive">
+              <AlertTriangle className="h-4 w-4" />
+              <AlertTitle>High-Risk Phrase Detected!</AlertTitle>
+              <AlertDescription>
+                The keyword `'{selectedKeyword}'` was found in the message.
+              </AlertDescription>
+            </Alert>
+          )}
+
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6 items-start">
             <div className="space-y-2">
               <Label htmlFor="plaintext">Plaintext</Label>
