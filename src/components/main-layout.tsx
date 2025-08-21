@@ -31,6 +31,7 @@ import {
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { useProfile } from '@/hooks/use-profile';
 import { Skeleton } from './ui/skeleton';
+import PocDisclaimer from './poc-disclaimer';
 
 const CustomLogo = () => (
   <svg
@@ -150,6 +151,7 @@ export default function MainLayout({ children }: { children: React.ReactNode }) 
               <h2 className="text-lg font-semibold capitalize">{pageTitle === '' ? 'dashboard' : pageTitle}</h2>
             </div>
           </header>
+          <PocDisclaimer />
           {children}
         </SidebarInset>
       </div>
