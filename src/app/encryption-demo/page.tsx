@@ -7,12 +7,11 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
-import { ArrowRightLeft, Lock, Unlock, AlertTriangle } from 'lucide-react';
+import { ArrowRightLeft, Lock, Unlock, AlertTriangle, X } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { getKeywordsFromFile } from '@/ai/flows/extract-keywords';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 
 const EncryptionDemoPage: React.FC = () => {
@@ -20,33 +19,26 @@ const EncryptionDemoPage: React.FC = () => {
   const [ciphertext, setCiphertext] = useState('');
   const [key, setKey] = useState('secretkey');
   const [detectedKeywords, setDetectedKeywords] = useState<string[]>([]);
-  const [keywords, setKeywords] = useState<string[]>([]);
-  const [selectedKeyword, setSelectedKeyword] = useState<string>('');
-  const [isKeywordInPlaintext, setIsKeywordInPlaintext] = useState(false);
+  const [customKeywords, setCustomKeywords] = useState<string[]>(['payment', 'delivery', 'crypto']);
+  const [customKeywordInput, setCustomKeywordInput] = useState('');
+
   const { toast } = useToast();
 
-  useEffect(() => {
-    const fetchKeywords = async () => {
-      const keywordFileContent = await getKeywordsFromFile();
-      const keywords = keywordFileContent
-        .split('\n')
-        .map(line => line.trim())
-        .filter(line => line !== '');
-      setKeywords(keywords);
-      if (keywords.length > 0) {
-        setSelectedKeyword(keywords[0]);
-      }
-    };
-    fetchKeywords();
-  }, []);
-
-  useEffect(() => {
-    if (selectedKeyword && plaintext) {
-      setIsKeywordInPlaintext(plaintext.toLowerCase().includes(selectedKeyword.toLowerCase()));
-    } else {
-      setIsKeywordInPlaintext(false);
+  const handleAddCustomKeyword = () => {
+    if (customKeywordInput.trim()) {
+      const newKeywords = customKeywordInput
+        .split(',')
+        .map(kw => kw.trim().toLowerCase())
+        .filter(kw => kw && !customKeywords.includes(kw));
+      setCustomKeywords([...customKeywords, ...newKeywords]);
+      setCustomKeywordInput('');
     }
-  }, [plaintext, selectedKeyword]);
+  };
+
+  const handleRemoveCustomKeyword = (keywordToRemove: string) => {
+    setCustomKeywords(customKeywords.filter(kw => kw !== keywordToRemove));
+  };
+
 
   // A simple XOR cipher for demonstration purposes.
   // In a real application, use a robust cryptographic library like CryptoJS or the Web Crypto API.
@@ -92,7 +84,7 @@ const EncryptionDemoPage: React.FC = () => {
       
       // Keyword detection
       const lowerDecrypted = decrypted.toLowerCase();
-      const foundKeywords = keywords.filter(kw => lowerDecrypted.includes(kw.toLowerCase()));
+      const foundKeywords = customKeywords.filter(kw => lowerDecrypted.includes(kw.toLowerCase()));
       
       setDetectedKeywords(foundKeywords);
 
@@ -127,17 +119,27 @@ const EncryptionDemoPage: React.FC = () => {
             />
           </div>
            <div className="space-y-2">
-            <Label htmlFor="keyword-select">Select Keyword to Monitor</Label>
-              <Select value={selectedKeyword} onValueChange={setSelectedKeyword}>
-                <SelectTrigger id="keyword-select">
-                    <SelectValue placeholder="Select a keyword" />
-                </SelectTrigger>
-                <SelectContent>
-                    {keywords.map(kw => (
-                        <SelectItem key={kw} value={kw}>{kw}</SelectItem>
-                    ))}
-                </SelectContent>
-            </Select>
+            <Label htmlFor="custom-keywords">Custom Keywords to Monitor</Label>
+              <div className="flex gap-2">
+                <Input
+                  id="custom-keywords"
+                  placeholder="Add comma-separated keywords"
+                  value={customKeywordInput}
+                  onChange={e => setCustomKeywordInput(e.target.value)}
+                  onKeyDown={e => e.key === 'Enter' && handleAddCustomKeyword()}
+                />
+                <Button onClick={handleAddCustomKeyword}>Add</Button>
+              </div>
+              <div className="flex flex-wrap gap-2 pt-2">
+                {customKeywords.map(kw => (
+                  <Badge key={kw} variant="secondary" className="flex items-center gap-1">
+                    {kw}
+                    <button onClick={() => handleRemoveCustomKeyword(kw)} className="rounded-full hover:bg-muted-foreground/20">
+                       <X className="h-3 w-3" />
+                    </button>
+                  </Badge>
+                ))}
+              </div>
           </div>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6 items-start">
             <div className="space-y-2">
@@ -170,16 +172,6 @@ const EncryptionDemoPage: React.FC = () => {
               <Unlock className="mr-2" /> Decrypt
             </Button>
           </div>
-          
-          {isKeywordInPlaintext && (
-            <Alert variant="destructive" className="mt-4">
-              <AlertTriangle className="h-4 w-4" />
-              <AlertTitle>Flagged Keyword Detected!</AlertTitle>
-              <AlertDescription>
-                The selected keyword <Badge variant="outline" className="mx-1">{selectedKeyword}</Badge> was found in the plaintext. This phrase is considered high risk.
-              </AlertDescription>
-            </Alert>
-          )}
           
           {detectedKeywords.length > 0 && (
             <>
